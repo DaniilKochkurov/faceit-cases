@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Кейсы • Мини-Апп</title>
+  <title>Бомж кейс • Мини-Апп</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -41,14 +41,19 @@
     .case-card:active { transform: scale(0.97); }
     .case-icon {
       width: 64px; height: 64px;
-      background: radial-gradient(circle at 30% 30%, #f6c358, #8b691b);
       border-radius: 16px;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 32px;
+      background: radial-gradient(circle at 30% 30%, #f6c358, #8b691b);
       box-shadow: 0 0 20px rgba(246,195,88,0.5);
       flex-shrink: 0;
+    }
+    .case-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
     .case-info h3 {
       font-size: 18px;
@@ -100,15 +105,34 @@
       font-size: 14px;
       color: #a0aab4;
     }
-    /* Лента */
+    /* Лента с указателями */
     .roulette-strip-wrapper {
       background: #0e0f14;
       border-radius: 16px;
       padding: 16px 0;
       margin-bottom: 20px;
       border: 1px solid #2a2d35;
-      overflow: hidden;
       position: relative;
+    }
+    .indicator {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      width: 0;
+      height: 0;
+    }
+    .indicator-top {
+      top: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-top: 12px solid #f6c358;
+    }
+    .indicator-bottom {
+      bottom: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 12px solid #f6c358;
     }
     .strip-viewport {
       width: 100%;
@@ -174,7 +198,7 @@
       border: 2px solid #c9a24d;
       color: #c9a24d;
     }
-    /* Содержимое кейса */
+    /* Содержимое */
     .case-contents {
       background: #14171e;
       border-radius: 16px;
@@ -225,24 +249,27 @@
   <!-- ЭКРАН ВЫБОРА КЕЙСА -->
   <div id="casesScreen">
     <div class="case-card" data-case="1">
-      <div class="case-icon">🎁</div>
+      <div class="case-icon">
+        <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxMSEhMTExIVFRUXGBUXGBcXFxcYFxcVGBUXFxUVGBcYHSggGB0lHRgXITEhJSkrLi4uFx8zODMtNygtLisBCgoKDg0OGhAQGi0fHx0tLS0tLS0tLS0tLS0tKy0tLS0tLS0tLS0tLS0tLS0tLS0tLSstLSstNy03LSs3KzctK//AABEIAKgBLAMBIgACEQEDEQH/xAAbAAABBQEBAAAAAAAAAAAAAAAFAgMEBgcBAP/EAE4QAAEDAgMDBwYLBAgEBwAAAAEAAhEDBAUSITFBUQYTImFxgbEHMnORobIjJDU2QnJ0grPB4RRS0fAUJTNikqLC8RUmQ1NUY4OTo8PS/8QAGQEAAgMBAAAAAAAAAAAAAAAAAgMAAQQF/8QAJxEAAgEEAAUEAwEAAAAAAAAAAAECAxEhMRIyQXGBBCNCsSJRwRP/2gAMAwEAAhEDEQA/ABVv838O+11PduUHKMW5/wCX8O+11PduUIWeh8u7+wKmxM7exEsPd0u5/taUO2IhhJ6Y7He6UxgIn3rwY6wPBN2/md5S70eaepvguNsyKNOrByvLxO4Oadk9ipjqOzjKjgI0LdpB/I7kSwmmC25yu05h8gjXY7RCnumBES0g8JBkIvyaA+MjjRd4OQSNXRkrkd/bA/8Alv8A9P8ABXq6Ycj40OmvcVn/ACJuGuqMIM5qb4I2HohaJV81/YD7CskuYn6KrU1jvSqYh/3B7Hfqkkeals877p94JN8mpEhqW0LgTrQhIcVfxW850lgJFPUGNM3fuCXynxUUwaYO6XGdg/d71VKOIVcmcNbljrWulTxcW3dhqjhYaPg9nBFLa3I2jXwQihevHNhpYC5smToEcsHViHSGEx0YI1M9vBPUQrJDjGFw0/kb1LcwkhoGwDbwUanc1w7JzTC4AGBw9aKUap5zI9obLQ4HxHdr6k9UhP8AqgVXttHEjTsVXxOxAdnpOcx4EgtJHgrtcX7CwdEgPLmg6EaFVi6rsDy0mTCTUi0HG0kdwHlWKnxa+ynMC3O4DK+dAx/WZ2hN4hgbmV306DaLGZXO6TQIgS3K8zG8bENv8PbUb0POHtRLk5fOu6b7WpH9KotPN5pmrQmCOst9oKCKsDazyCbXDamRznBw2zJ6OnAbJ6wpXImg01qpO2m0QPSEyf8AL7U87nW0S2o5oBADWNbGUAyXd/WomACo2vzzC7Xoc2BIqyYynSewjenQptvANdqMQlyu/wCn9R5/+Sn/AAVUuWSrTyiuqdYMdSeHANqNdG1rhUZ0XDcdqrdQIJxsyoO8Qh5MKUYpS105q47ugJ9v5LXcSqljC5oGYDSdiy7ydM/rKls0oXJPXPNBapfUMw2TskdUoJaES58gzGx0mD+7x60GfOu9GcbHSZ9X80IcFQa0Q7qmHNcIVacFbHAwq3e0ocQd3BDINMjRvSHJ0JLkNyyVye/bbL0w/DqLMvKH8p3vpn+K07Af22y9OPwqizDyifKd76Z/imUPd8CZl6ofN/DvtdT3blCmBFbf5v4d9rqe7coWCjofLu/sz1Tm9T8KEVG9/ulQvpdylWLoqM7fyKcCgjdt6DfqjwXKFZ/MZOlzeYO2GA7KQTwkg+xee74Js7hHthdsKmWlBaXNdAIDsplueHDomYLhppsVMdRIoJA0Pdu0Vg5H1Bz1Qn/thx0mQHtLtN+m7rQCowwjHJA/DPbrrScO7M0fmls19GM8j30xeNbSM0ia3NHKWHm3SWAtOohuUdy1Fwlh62jwWP4DW5mvbOdspvaCf7jhlnuBB7lsNPzfuj8kivG0rilK6KpuCXTHTH1XeLV009AOv8kprYc3sf8A6VkbNy0SGhIv7oUaT6h+iPbuTrQqvy8uCRSogxmlx7BoEVNcUgZuyKZi966oHecSTt09pKm1mEUww02EnKBNcl3qiAo1StTp7QCR369iJYfi/OaGm1w4Fq6HDiwmNRBAUqfO06ZH9HcGwC8QC7cM2oKLW1GrRd8PSzNMQ9gketuxRXUWyDlL2jR1N2vR35TuKLYPQdTfkzufRe3NTzbQJ1aetuz1IrYGp5O29dpuDAf5g01JTmI1ngsqNouOQkGXgS09S5zXxlzoGUNjtKXi1YOblmAdCJgAdUbU1PKFyX4vAKxRrjQZNDKR0mua9s7Z2Sq1SuSXOc7MJ06QJ7swRvE6lvBDGjMBA116zqUKZQayHNcYOjgDs643oJXaZSaTQtlXeD3hM3JLHsuaXRq0iDI04gnTboSnq9AASPZoD3Ji1qw7XYRHcUhJ3GztJEzAM1SkKVR+Yh1TmwXdN9Mmd+pgkiURucPplooHQloIAMFgDuierUexVuhZNquFMGH58rHSQWtAL3OJbqPNjtKs+GYe6kajqj879ZdZLiGNBiS7XaSu16RLh0civJt2Ktf4dVttSOiTlDmSWmdAIGs7NFzI7KC5jmcA4QY4xu71cK9fh61WMduDEjaNe5Sv6eLTaJSquLCvk3pj/iU8Lat3S+kFqwWYeTKnN9XP7tsP89Vv/wCVpi408MfUywLjv9o36ni4/wAENLkRxxvwgP8Acb4uQs9iAatDLjKD4s3UHcR4Iq6OKjYnR6AMqbQSARA4pouHWnnDqSHIEGS+T/7bZenH4VRZf5RPlO99M/xWoYB+22fpx+HUWYeUT5TvfTP8Uyh7vj+iKherf5v4d9rqe5coUwopb/N/DvtdT3LlCZR0Pl3f2IqbFAyVKszDm/WChTqpdr5zPrN8Qn6QCDN+0CmB2+KjWRJpNBOgLoGzQ6kZu5S8TJDD973ihtmM1PbGp9hQS2NobHnsO9F+RY+MuG40nA972QgQbB1MovySeBdN62vnsyExHaAe5LkzZ0YAovkNcdxLT1ESPyWo8k711WmxzjJNKDwzNeG+vRZncUgHXDToA/P3FwJ94q+eTukajSzMW5S8GNpYebdA4Sd/WUdWDlFGanJK6ZLqN6R13nYuEdNn3vALxoc2S0CACRHVOi6/zmHrPurlTwzoxyiQxUfl88muxjdopt7sznH8leGKicrbnm77PMjJT6xvlN9OvzAq6AX/AAh20iUunc80dEm4xmsTkpMc9xnQR7VEv7S5ZrUpRPDYuhrKEOP6LlhmLB+2O5WKwqtcGa+a957nAT4LJba6c0hXXBarjQbUk7T7DCtywMpu+C0f9QkGRr4rl5dMptO8oRWveaphx2lVTFMcc8n8lakkhkpBu5fSqu2a9UBNPwlwE03HsKrVpfuzSGPceoEhHsO5RmcrmFpG5wIPtQ4YCQh+doIeO9Rm7UcvLplRh013IK3ih4SMIcnv2sgDUtMdukzwCRiHKOk9wpUnhzS74SoCIcP+2wjaCdpVexur0Kp2SI7idiq9rc5H0nfu1Kbt2wPB2LdR9R4wx4TnVKeWzWKjyBDyM52Mb9Edm3vKA41Slp03R2q1VgDMbTtJ2nvQbFqEMJlb5q8TMnkneSp2a6uHD/wANT2HZ8KNO1aeFknkPoPbVvHup1GteynzbixwY8c44uLXRB+js4rWAVwaq/I2sDY15+yeg380ILu1GccHwn3W/mg5O1LaGrQzVOijVmaESTKkPbtTDxB2+tUmEAiNUlyfuhBOijhBcIl4EPjtl6cfhVFl3lF+U730z/FajgP7ZZ+nH4dRZd5RPlO99M/xTaHu+BNQvVD5v4d9rqe7coQEWo/N/DvtdT3blBgUyh8u7+xFTYreFItXQWfWHiobdydomI7QfanPQCLNiDpYfrPH+YofhbS5oHWfaVMxB5y/eJ9ah4bRLqL3ZeiKhbmkAAwDqe8IZsZSeSRXo6g7N2zcN5Klcl3xeUxpBbVn/ANskeChXFwNDhpAAADiTJ0GpGwJ7k86Lujs1L2/4qbv0SpaNSeBvGbeKzhue17eslrnMJ931qxeTS4cyu7YWvoPcdfpsNPLHa0vn6oTOOUwKmcAdCqXTv5t7ix/qcWHuQrkdW5q5a1x0ZWq0zH7lQVA0+pzT3LR8TIuYvN08ue4uOucz601U2t7fyKdxDSpU02OPimAC4NIE6gyNdIK4tTmZ1oaQC8odxUZZAUyW56jGOI25Ic4iRxygKmWti6swEDzQSZ4Sf4K/cs6Geyq8WFlQdzwD7CVVsMpuLXNaYloE9S2+na4Rc1fBW6dGtmPNBwiZLdshGuS1e6rirSfVuJDSWipTaaW3ZLm5pPUVJbbVaJ6NGsesAOaesEGfWjVnf1iBNJ7Rxdps75WiM0tgf5NlIvKGpMQ4bRu7lpHJK1As2Uy0TBceokyqvjJDqsyJJGnXsV45M0iGxGp8FW5WGQjw5IHKeyGSWtGjWgdp0JVBrWRpkZtZ2LTMTnM4HcSFVr2k7J0DIB2HxCj2XKJUaeP1WVHMY1jSz29iK3OJ88WsuGZX/Re0bdOK4alEumpbsc4b418VLq3bHkRTjtjRE27CFe4mzYfNO3xSazYRWm9uhAEjeoF3TmUtjWsESlgn9JaQXZWyJIidNUGxfAbZvQYa2b98EObO6WkbOwhWe2riOaaQNIKWbBrRG3xRJ/okKSayT7a/YaectqvgDMadN7gNIMwNO9AeUGL0HUnkZx0TEtI1jSdZRfDL/mKVanMDM1w12yIOncPWqJy4upaANC469gWleqm/xM0/SRgrmq8l3VKdpbZXuaRb0hoTA6AnQ6KxUMWqhsuh8CekIOzZI/ghFm2KTAN1Jg/yNU17eg7sWOXMxyhFxyh/EavOEujLo3SZ3fqhbzoQiN4NTA06lCI2oWKas7EMxO9N1Oval1ACddU3UGv6oCwZfNEqEZRS9GiGuCoIkYAfjll6f/66iy7yifKd76Z/itSwH9ssvTj8Oost8onyne+mf4o6Hu+BMy8M+b2Hfa6nu3KCMdvRyn83sO+11PduUCKZQ+Xd/Yips9OoS3lMkpx5g6/zKc0DEtV+3oOPWPa1p/NQMMujzFWllBDqofJ2iGN0bw2BEajgWOn91p9TAhmB27qssZlzTPSMN2TqVVTAdLY8CSC0CYEnqAgT1bQn8BuA24oyzMS7K2TGVztM/XAnTrRi9q07Vg5unRdUe0NdqTDtczsmvRnUAkaoVg9vUq3DD5xaedeSdcrYzEdeoSZNmlZDWJuzuewbSxwP1i4j8wVWbK4AqGpsDxbvJ4SQxzjvgZdeEo3jJIr1ImA7/QD4lBrKg1tVtMnRxqUwDvBiqB6p9S1QzExt2kXrnTUZnO1w1+t5rv8AMCmqdEwxoLgAWjqhOYWz4OBskx7OHWCe9T3UjAMb2n2rj14tTaOvTknEjYrbZ7euz96lUA/wkj2hZvhl7DgeIHgtRN5RZ/aVqbRvl7d+nFZG0ZXEbYJAPEAwD3p/plJAVJWaL1a1yW7V7EXhrJmNEMw+vIXMUuBU+DDusnqWuw7iXCQMLoc9UzHZK0TB6ZHcqJgFZjamUH/eVfLO6bnaCejAlSMc5BTvHBFxZsOc7tVYFWZ7VdboMquMEb1TrvCnte+CCNT3dyjTTJe6yCbmyDtYEoabNwKLtrQU+7KUSkJdNPRGtTCTcVIBK9VUa6qAw3rSpO4WsCryyLaudp0cAe+NQp9JrsskqU2lLROxMXVUNaSfNb7TuCuKyPVlG7K9j+OMouLebNSpAMAw0A7Mx2z1KnYjUq1yXubBiABsA/nej2IPaXOcWklxJP8AIChW9ME6TqQNesgJtuE586rm7dDaaToEcAB6oUp7pY7u8VDYNT2qUOHEt8QsEp5NsY4Hq9SZI4kHuKiu2FPsHRPW+ofW90JmvEb0wyS2QnN11lMvPUCn3TuUasdUNyDNZoLUJczrlF3uEIXWBCtssfwL9ss/Tj8Koss8onyne+mf4rU8D/bLL04/CqLLPKJ8p3vpn+KKh7ngVULu35vYd9rqe7coEN6OD5vYd9rqe7coC2Uyh8u7+xFTZ4wU2HSYS5TU9NPYES5VxFMk/uU/aEIsf+prp0THbKI2tbNTEjbTHskIbZHpv7G+JCGbDo8xKY3aRwRXktWLbhoH02VWf5C4e1oUC10JMiQHbeJaYT/J57BdW+ckDnBsE9IyGg8AZhIyzW9E7Gavw1Rwgj4OdeFNoJ9YVbxG+aToNQ5rgetoLdPWlY9iRzvbvMHu+j7AgZqLXFYsY5LIZZj9Zs5armA7Q0xuQ27xaq6c1RzutznGEOrVEy56pxQSm11H3VtfzA/NE7a5ztBnUbUAq1OClYTWh4HEEd8Sht0CUnfJbbW8yMceG7eVExFznAFpgpu4pzlHEqSGaJdzRxOwEoVKtN4cX75R6hymeN89XFRzbTpCKYVhLWuBc0TpAVkjKS0Ar3FLx7szarqbeAHiVbcCxCq+lnqxMZW6aniTwR6hZMykZG69QQuvRyzporasNUm9gC7qZahBGjtR/BKFeE3i7SRm3j2Deo9WcoPFDcjkSa1xoodR+/hqY3DikF2kI9gliHUng6c61zJ4NMj9UtsGLuydbVAWtA2eKFYxcBzssiBptETxRTCsErS0VnNyt0GVxJd7BCreP8jK9vmq2tR9RupdTdq8DeQT53im05L9F15NxsgTfxIAJe8/RYOiOsvMDuCH4RULnwRsq0hH/qCQp2C3XOZidHDQz+u9Kw6j8Y2EF1agdePODZ7Ec+W5kp81ma40a/e/NSw3Z2hR6I1+8prG6t7VzJPJ1FhCG9JugJ1f7CfyUSsdNqh4vc1KZpPERDgCdrXuqdEt02wOOxSuclrTxAPrCf0MUuZkZ5M7VHeOtSKwJUV7VRBJOuxDbpoB0RHvUW8G9TZBvAj8cs/Tj8Oost8onyne+mf4rUsDPx2z9OPwqiy3yh/Kd76Z/ijoe54/ouoXcfN3D/tdT3bhAGo64xydw/7XU925Vda9NoLEu7M9XY/VaMsqJVPSb/O9SfolQaztQnAR2W/DBNFvENd7HfqoNj/aP62j2O/VSsHqfF54c4O3zSmLbLmnXNqDwggH1yELXUOlzEmkekSZIg7OMaKFiFxA0OVwMiDBBEkGe1TmDRztYiJ4E7ECvqsk6cfYkI1sVyodFzr+4wnr2hCTWU7lY88+ydzA3uAn19JCC7Va4mSQ498psuXMyQSiaKOlLt3w9hnePUdE1K5Gs8NUErPCLTLswjI09Z/RJFy3YXAKNYVszR1pq+obSP8AdKeGaYu5YcPubdsOc4HsKNU8XtieiZWVXeIvDSzIKeyC3+HrUG45wwC+Sd06jh2K7miLVtG4sxmkBBJb2/oouI1w4aEHs4LMLK/q8zkbTLqoPnEAggGYO+Y0Vmw7C7nIKjnCnmAOWJ0jr2FQHiuT7inI1hD6zTkb2KSJG0ymarpMIGDJkJwhWvD9A0cAB7NVXMmZ7R17ezarVZ00BaClvW0U1tQGFDpUggHLDlE2i11CkZrOEEjZTEan6yZGN2BKVip45UYbqoaQhsjUbzABXmXBaWnQlpa4Txacw9oCHWwjWUvnJT7dDK5O90aNyf5T0qzmU3jm6pOn7juoHceoq3AdJo6/yWFOIO1ab5Psfq3ZdQqNzVKVPO2oNr2AhuVwP0tRqNqzVfT3yjXT9TfEg1f2xdSZlDCRBGcEwDMuEEQ4TvkJuo2IHAAdw0Rs2TspaNXNa2RvAjeO4+pDa9uRt0PBLdNpZB4k2Cag3woryFOqs1OsKHVCAIaKj12aJ9yYqO0UINYGfjtn6cfh1FlvlDP9Z3vpn+K1PBf26z9OPw6iyzyifKd76Z/ijoe74/ouZdX/ADdw/wC11PduVXKQMqxVfm5h/wBrf7twqwwp3p/l3f2IqbJQKYxajzdTL2e0Ap1oOzelYk7NVa6J6DSR93bCbcWthKyrzRcdgzuHdDSE1ZVvhWtkEEOM9g0TGDE805o3uHgUq2GWswccw4fRKXLQdPmDV4DTaZ0ndrrpoVXqdu6rUDGCXPJAHElHsWvanMimdQ3ZoM0bgTtIG5VrPBMEggyCNCDuIS1FGp6OcrqZZXptJktGUniW02An2IK5F+U9V1Q29V5lz2AuMRJgidPqoRT2LVDRmkOJIMrkJTVdgTzikylOSHFRogZwGvALTtEnu4I62CW79R6gZVPsLrI8O3b1aqZBGhkFKlh3HU2H8X5PMrNzUmidwMa9h3IC3kbcNBaKbTJ1GZviplpidSm4Q4kDcpb+UryTI16jKFqLybYOLRP5M8k2Wo56tq86ZSZHEbNCp2JVC4lx2cFFtLt1QgvOxSbyr0RCvpgkmloC1tiidalXGuiHX9fKIBE+CHYlkjDjLi6OoDh1q12Eqn4I/iZJPqUrG+UwptNKiZdsc/cOpvEq1AtTSRN5S8q+amjQMv1Dn7QzqHE+CotNhcSST1kmSTvknVJp0SdSVKFNOSsjLOpdiXnRcASqlUDRJzyoLOBSsPxF9vUp3DCQ6k4PEEiW/TYY2gtkKIHJTSpsiZp1blNcijVLGtNIjPn+nBE5eJAJ7kW51xY0neGnr1AKrWB1ecwm2/uPr0HiNuV5c0nuyq0AEsZ9RvuhZKknxNM0QirXIVd0qK4qZU3qLUCWNGHT4pgnvT1Q6JkOlUQ5hI+PWfpx+FUWU+UT5TvfTP8AFaxhZH9OsvTj8Koso8onyne+mf4plH3fAuZcbgxycw/7W/wuFWaYMSrNc/NvD/tb/C4VXo1y0OA+kI18UdG/5d2IqbLPbWoIY6ADl17wmLi1yVG1HaBrDP1Wgz4qTh1X4Nmk9Fo16l7FHB1UNOmZgaR1ve0eBKcKtkGYVfCaha2GjLpxMQ49U8F22rRcUXxIDiI7WkeJCm47hjbe7q0WNDWNY0D+9Ahzj1yhVI5Xs+s3f1wqksBwdpBjGahh5dtJH86qvU2S7b2I1yhqgtpxr470CcUtOyNd7i+Ucc1an90ZTwkF6B51YMapNNnSdJzZuOwlzpHt9qrgGq0Q0ZmONqJeZNBdaEVwR1IdolbkkhQg2EUwfFObOR+rdx4Ie7imXHtVNJqxaZeWVWkSCCOIRnBWUSek0E7lmFG4czzXEdilUcXrN+kSg/ziNjUaNko2tDgB2FR8SYxo0O6dyyr/AI7cfvpFzi9Z4guPrUcEg3WuWzE8aZSBgy7cqxUxQvOY6nf/ALIdPHXtTzABsVJIW5smsvHkdGQnKVLe5R2XPABJqVXFHZMBtsIGuAkOueCga709SbKsGw/SYUtxAXGGE3UegwiChUXucTBKTRdJUuSxf/J3Xm0v6RM5KtKoB1PaGmO9ivb3AgEcB4LLvJzXitdMn+0oh0eiqs/J5Wl2rppt6pHqKy1eY00+UjV+KiPOqmVVDeljBh2xRiFIeUw7TVWQXhI+OWXpx+HUWT+UQ/1ne+mf4rWcJPxyy9OPw6iyfyhn+s730z/FFR93x/RUy4XPzbw/7W/3bhVFxgK3XI/5bw/7W/wuFTm1JCdQ1Lu/sVPZY8MxIBrWz1Lt1XBuTv2N9ns1QC3qat7QpjawFfMToHE93BOtcAPcpL11TEblhcCKZNNsbCAGkmd5Qao6CO1viu4VWDrl7tubOZ7ivYtTykgBVIpbOXdeXuBBgbO7eoydfWLp2QTI7+tR80FKawarisTcTbAbmvEd53oEx2qP3xm2eI2OBn/CfyVfZuTaehMtjyVCbaUtwlMaBFBccdF5oSahUKOBeJ6l4BdI0UtYsSVwt1Slxg/nxVXwQ8BPUlBqU0JeVDso5zcp9tNdYnIUsS4htLgnWiO1cb4rrleizoqJWZNr0qXKY6475TReu1DomW6oSxxzhtSbUbUmpwTjRlaUNyFr8nVkX1biv9GnSLPvVKjIHDzWPPqWh4c7ouHXPrH6IJ5PcP5vDHPO2u97/utIps7tHH7yMYc7R/cstRviNVNficrHRRXFSq7VEchDI7gmDvTyYcrKY7g5+OWfpx+FUWT+UT5TvfTP8VquDfttl6cfh1FlPlE+U730z/FHR93wKmXG7Mcm8P8Atb/C4VKZsXl5HR+Xdip7F0NoUi486V5eWgX1JHJx/wAOzrJHrBCn4vUlsry8p0J1QKLiu5l5eSrmroOVwTa1jwLQOOwn8kAZsXl5NhoVIU1OB3FcXkYAtplccyV5eUKOwuFq8vKmWJc1dZuHcvLyp6IOtS2BeXlE8FDjZS5XlUiCl6V5eVssSXLlN0rq8gRDl46CAkUyvLyJkPOfLinKroaTwn9F5eQMhvVpYChaUqI+hQY0j+9kl3tlDLE6nsXl5Y58xsp8gu5UOroF5eVFkZ4TLyvLytFC8F/bbP04/DqLKvKH8p3vpn+K6vJlH3fAqZ//9k=" alt="Бомж кейс">
+      </div>
       <div class="case-info">
-        <h3>Grand Slam</h3>
+        <h3>Бомж кейс</h3>
         <div class="price-tag">Стоимость: <span>3 реферала</span></div>
       </div>
     </div>
-    <!-- В будущем сюда можно добавить ещё кейсы -->
   </div>
 
-  <!-- ЭКРАН ОТКРЫТИЯ КЕЙСА -->
+  <!-- ЭКРАН ОТКРЫТИЯ -->
   <div id="openScreen" class="open-screen">
     <button class="back-btn" id="backBtn">← Назад</button>
     <div class="case-header">
-      <h2>Grand Slam</h2>
+      <h2>Бомж кейс</h2>
       <div class="price">Открытие за 3 реферала</div>
     </div>
 
     <div class="roulette-strip-wrapper">
+      <div class="indicator indicator-top"></div>
+      <div class="indicator indicator-bottom"></div>
       <div class="strip-viewport" id="viewport">
         <div class="strip-track" id="stripTrack"></div>
       </div>
@@ -260,26 +287,29 @@
 
 <script>
   // ========== КОНФИГУРАЦИЯ КЕЙСА ==========
-  const CASE_PRICE = 3; // реферала
   const skins = [
-    // Дорогие (красный фон, шанс 3%)
+    // Дорогие (красный фон, шанс 3% каждый)
     { name: 'M4A4 | Choppa (FT)', price: '~9.5 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Choppa%20(Field-Tested).webp', rarity: 'expensive', chance: 3 },
     { name: 'AK-47 | Olive Polycam (WW)', price: '~8.7 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20Olive%20Polycam%20(Field-Tested).webp', rarity: 'expensive', chance: 3 },
     { name: 'R8 Revolver | Grip (FT)', price: '~7.2 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/R8%20Revolver%20%7C%20Grip%20(Field-Tested).webp', rarity: 'expensive', chance: 3 },
-    // Дешёвые (без фона, шанс 18%)
+    // Дешёвые (без фона, шанс 18% каждый)
     { name: 'M4A4 | Steel Work (FT)', price: '~0.8 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Steel%20Work%20(Field-Tested).webp', rarity: 'cheap', chance: 18 },
     { name: 'SSG 08 | Calligrafaux (WW)', price: '~1.1 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/SSG%2008%20%7C%20Calligrafaux%20(Well-Worn).webp', rarity: 'cheap', chance: 18 },
     { name: 'Glock-18 | Ocean Topo (FT)', price: '~0.6 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Ocean%20Topo%20(Field-Tested).webp', rarity: 'cheap', chance: 18 },
     { name: 'AK-47 | VariCamo Grey (FT)', price: '~1.5 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20VariCamo%20Grey%20(Field-Tested).webp', rarity: 'cheap', chance: 18 },
     { name: 'M4A1-S | Wash me plz (FT)', price: '~0.9 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/M4A1-S%20%7C%20Wash%20me%20plz%20(Field-Tested).webp', rarity: 'cheap', chance: 18 },
-    // Невозможный (жёлтый фон, шанс 0%)
-    { name: 'Glock-18 | Moonrise (FT)', price: '~98 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Moonrise%20(Field-Tested).webp', rarity: 'impossible', chance: 0 }
+    // Невозможный (жёлтый фон, шанс 0% на самом деле, в списке покажем 1%)
+    { name: 'Glock-18 | Moonrise (FT)', price: '~98 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Moonrise%20(Field-Tested).webp', rarity: 'impossible', chance: 1 }
   ];
 
-  // Построение пула выбора
+  // Пул для реального розыгрыша БЕЗ невозможного скина
   const pool = [];
-  skins.forEach(s => { for (let i=0; i<s.chance; i++) pool.push(s); });
-  while (pool.length < 100) pool.push(skins.find(s=>s.rarity==='cheap'));
+  skins.forEach(s => {
+    if (s.rarity !== 'impossible') {
+      for (let i = 0; i < s.chance; i++) pool.push(s);
+    }
+  });
+  // pool.length = 3*3 + 5*18 = 9 + 90 = 99
 
   // ========== DOM ЭЛЕМЕНТЫ ==========
   const casesScreen = document.getElementById('casesScreen');
@@ -292,14 +322,12 @@
   const statusMsg   = document.getElementById('statusMsg');
 
   let isRolling = false;
-  let currentCase = null;
 
   // ========== ПОСТРОЕНИЕ ЛЕНТЫ И СОДЕРЖИМОГО ==========
   function buildStripAndContents() {
-    // Лента: повторяем скины несколько раз для красоты
     stripTrack.innerHTML = '';
-    const repeatTimes = 6; // длина ленты
-    for (let r=0; r<repeatTimes; r++) {
+    const repeatTimes = 6;
+    for (let r = 0; r < repeatTimes; r++) {
       skins.forEach(skin => {
         const div = document.createElement('div');
         div.className = `skin-item bg-${skin.rarity}`;
@@ -308,7 +336,6 @@
       });
     }
 
-    // Содержимое кейса
     caseContents.innerHTML = '<h4>📦 Содержимое кейса</h4>';
     skins.forEach(skin => {
       const row = document.createElement('div');
@@ -325,8 +352,7 @@
   }
 
   // ========== ПЕРЕХОД НА ЭКРАН ОТКРЫТИЯ ==========
-  function openCase(caseData) {
-    currentCase = caseData;
+  function openCase() {
     buildStripAndContents();
     casesScreen.style.display = 'none';
     openScreen.style.display = 'flex';
@@ -348,9 +374,8 @@
   function roll(finalSkin, speedMode = 'normal') {
     const itemWidth = 138; // 130px + 8px margin
     const totalItems = stripTrack.children.length;
-    // Индекс финального скина в ленте (находим первый попавшийся с таким же объектом)
     let finalIndex = -1;
-    for (let i=0; i<totalItems; i++) {
+    for (let i = 0; i < totalItems; i++) {
       const itemSkinName = stripTrack.children[i].querySelector('.name').textContent;
       if (itemSkinName === finalSkin.name.split(' (')[0]) {
         finalIndex = i;
@@ -359,22 +384,17 @@
     }
     if (finalIndex === -1) finalIndex = 0;
 
-    // Центрируем выбранный элемент
     const viewportWidth = document.getElementById('viewport').clientWidth;
-    const offset = (viewportWidth / 2) - (itemWidth / 2) - (finalIndex * itemWidth);
+    const startTrans = -finalIndex * itemWidth + viewportWidth / 2 - itemWidth / 2;
+    const duration = speedMode === 'fast' ? 2500 : 7000;
 
-    // Длительность прокрутки
-    let duration = speedMode === 'fast' ? 600 : 2800;
-    const startTrans = -finalIndex * itemWidth + viewportWidth/2 - itemWidth/2; // конечное положение
-    // Для плавности делаем анимацию через JS (без transition на время)
     const startTime = performance.now();
-    const initialTransform = 0; // стартуем с 0 (можно оставить текущий)
+    const initialTransform = 0;
 
     function animate(now) {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // easeOutCubic
-      const ease = 1 - Math.pow(1 - progress, 3);
+      const ease = 1 - Math.pow(1 - progress, 3); // easeOutCubic
       const currentOffset = initialTransform + (startTrans - initialTransform) * ease;
       stripTrack.style.transform = `translateX(${currentOffset}px)`;
 
@@ -411,17 +431,14 @@
 
   // ========== ОБРАБОТЧИКИ ==========
   document.querySelectorAll('.case-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const caseId = card.dataset.case;
-      openCase({ id: caseId, name: 'Grand Slam', price: CASE_PRICE });
-    });
+    card.addEventListener('click', openCase);
   });
 
   backBtn.addEventListener('click', goBack);
   btnOpen.addEventListener('click', () => startOpen('normal'));
   btnFast.addEventListener('click', () => startOpen('fast'));
 
-  // Инициализация стартового экрана
+  // Инициализация
   casesScreen.style.display = 'flex';
   openScreen.style.display = 'none';
 </script>
