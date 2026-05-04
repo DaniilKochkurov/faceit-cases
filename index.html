@@ -5,191 +5,204 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Faceit Cases</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; } /* плавная прокрутка */
-
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: #0f0f1a;
-            color: white;
-            padding: 20px;
-            min-height: 100vh;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        /* кастомный скроллбар для красоты */
-        body::-webkit-scrollbar { width: 6px; }
-        body::-webkit-scrollbar-track { background: #1a1a2e; }
-        body::-webkit-scrollbar-thumb { background: #4a4a6a; border-radius: 3px; }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-top: 10px;
-        }
-        .header h2 { font-size: 24px; margin-bottom: 10px; }
-        .balance {
-            background: #1e1e32;
-            border-radius: 12px;
-            padding: 12px 20px;
-            display: inline-block;
-            font-size: 16px;
-            color: #ffdd57;
-        }
-        .balance span { font-weight: bold; font-size: 20px; }
-
-        .section-title {
-            font-size: 18px;
-            margin: 25px 0 15px;
-            color: #aaa;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .cases {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 15px;
-            margin-bottom: 40px;
-        }
-
-        .case {
+            font-family: 'Arial', sans-serif;
             background: #1a1a2e;
-            border-radius: 20px;
-            padding: 20px 15px;
+            color: white;
             text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 2px solid transparent;
-            position: relative;
-            overflow: hidden;
-        }
-        .case:hover { transform: translateY(-3px); border-color: #3a3a5e; }
-        .case:active { transform: scale(0.96); }
-
-        .case .icon { font-size: 42px; display: block; margin-bottom: 10px; }
-        .case .name { font-weight: bold; margin-bottom: 6px; font-size: 16px; }
-        .case .cost { color: gold; font-size: 14px; }
-        .case .locked { 
-            position: absolute; 
-            top: 10px; right: 10px; 
-            font-size: 14px; 
-            opacity: 0.7;
-        }
-        .case.referral { border: 2px dashed #ffdd57; }
-
-        #result {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            background: #1e1e32;
-            border-radius: 15px;
             padding: 20px;
-            text-align: center;
-            font-size: 18px;
-            z-index: 10;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
-            transition: all 0.3s ease;
-            transform: translateY(100px);
-            opacity: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+            height: 100vh;
+            margin: 0;
         }
-        #result.show {
-            transform: translateY(0);
+        h2 { margin-top: 0; }
+        .cases {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .case {
+            background: #16213e;
+            border-radius: 20px;
+            padding: 25px 15px;
+            width: 120px;
+            cursor: pointer;
+            transition: 0.2s;
+            text-align: center;
+        }
+        .case:active { transform: scale(0.95); background: #0f3460; }
+        .case .icon { font-size: 45px; display: block; margin-bottom: 10px; }
+        .case .name { font-weight: bold; margin: 5px 0; }
+        .case .cost { color: gold; font-size: 14px; }
+
+        #animationOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 100;
+            padding: 30px 10px;
+        }
+        #slotWindow {
+            width: 90%;
+            height: 100px;
+            margin: 60px auto 20px;
+            background: #2c2c44;
+            border: 3px solid gold;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        #slotStrip {
+            display: flex;
+            transition: transform 4s cubic-bezier(0.15, 0.85, 0.35, 1.0);
+            will-change: transform;
+        }
+        .slotItem {
+            min-width: 90px;
+            max-width: 90px;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px solid #444;
+        }
+        .slotItem img {
+            max-width: 70px;
+            max-height: 70px;
+            mix-blend-mode: multiply;
+            filter: drop-shadow(0 0 3px black);
+        }
+
+        #resultText {
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 30px;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: 0.5s;
+        }
+        #resultText.show {
             opacity: 1;
+            transform: scale(1);
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h2>🎁 Кейсы Faceit LFG</h2>
-        <div class="balance">
-            🔑 Ключей: <span id="keysCount">0</span>
+    <h2>🎁 Открыть кейс Faceit LFG</h2>
+    <div class="cases" id="casesContainer"></div>
+
+    <div id="animationOverlay">
+        <div id="slotWindow">
+            <div id="slotStrip"></div>
         </div>
+        <div id="resultText"></div>
     </div>
-
-    <div class="section-title">⭐ Стандартные</div>
-    <div class="cases" id="standardCases"></div>
-
-    <div class="section-title">👥 Реферальные</div>
-    <div class="cases" id="referralCases"></div>
-
-    <div id="result"></div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
+        if (tg.requestFullscreen) tg.requestFullscreen();
 
-        // Пытаемся получить данные пользователя (рефералов, никнейм и т.д.)
-        // В будущем бот может передавать balance через initData
-        let userKeys = 0; // заглушка, позже будем получать из бота
-        const urlParams = new URLSearchParams(tg.initData);
-        // Если бот передал ключи через initDataUnsafe (при тестировании)
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            // Пока заглушка, позже можно заменить на реальное получение из бота
-            // userKeys = tg.initDataUnsafe.user.keys || 0;
-        }
-        document.getElementById('keysCount').innerText = userKeys;
-
-        const standardCases = [
-            { name: "Новичок", cost: 0, icon: "📦", items: ["🎭 Роль 'Новичок'", "💬 Доступ в чат", "😺 Ничего"], referral: false },
-            { name: "Обычный", cost: 1, icon: "🎒", items: ["📛 Смена ника", "💎 +50 монет", "😺 Ничего"], referral: false }
+        const cases = [
+            {
+                name: "Обычный",
+                cost: "3 реф.",
+                icon: "📦",
+                items: [
+                    { name: "M4A4 | Choppa (FT)", img: "https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Choppa%20(Field-Tested).webp" },
+                    { name: "AK-47 | Olive Polycam (FT)", img: "https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20Olive%20Polycam%20(Field-Tested).webp" },
+                    { name: "R8 Revolver | Grip (FT)", img: "https://cdn2.csgo.com/item/image/width=916/R8%20Revolver%20%7C%20Grip%20(Field-Tested).webp" },
+                    { name: "M4A4 | Steel Work (FT)", img: "https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Steel%20Work%20(Field-Tested).webp" },
+                    { name: "SSG 08 | Calligrafaux (WW)", img: "https://cdn2.csgo.com/item/image/width=916/SSG%2008%20%7C%20Calligrafaux%20(Well-Worn).webp" },
+                    { name: "Glock-18 | Ocean Topo (FT)", img: "https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Ocean%20Topo%20(Field-Tested).webp" },
+                    { name: "AK-47 | VariCamo Grey (FT)", img: "https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20VariCamo%20Grey%20(Field-Tested).webp" },
+                    { name: "M4A1-S | Wash me plz (FT)", img: "https://cdn2.csgo.com/item/image/width=916/M4A1-S%20%7C%20Wash%20me%20plz%20(Field-Tested).webp" },
+                    { name: "Glock-18 | Moonrise (FT)", img: "https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Moonrise%20(Field-Tested).webp" }
+                ],
+                cheap: [3,4,5,6,7],
+                expensive: [0,1,2],
+                unobtainable: [8]
+            }
         ];
 
-        const referralCases = [
-            { name: "Реферал ВИП", cost: 3, icon: "🌟", items: ["🌟 Роль 'VIP'", "🎫 Доступ в закрытый чат", "🚀 Продвижение", "😺 Ничего"], referral: true },
-            { name: "Легендарный", cost: 5, icon: "💎", items: ["👑 Роль 'Легенда'", "🔓 Разбан", "✨ Уникальное звание", "😺 Ничего"], referral: true }
-        ];
+        const container = document.getElementById('casesContainer');
+        cases.forEach((c, index) => {
+            const div = document.createElement('div');
+            div.className = 'case';
+            div.innerHTML = `<span class="icon">${c.icon}</span><div class="name">${c.name}</div><div class="cost">${c.cost}</div>`;
+            div.onclick = () => startSlotAnimation(index);
+            container.appendChild(div);
+        });
 
-        function renderCases(containerId, cases) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
-            cases.forEach(c => {
-                const div = document.createElement('div');
-                div.className = `case ${c.referral ? 'referral' : ''}`;
-                const locked = userKeys < c.cost && c.cost > 0 ? '🔒' : '';
-                div.innerHTML = `
-                    <span class="icon">${c.icon}</span>
-                    <div class="name">${c.name}</div>
-                    <div class="cost">${c.cost === 0 ? 'Бесплатно' : c.cost + ' ключ'}</div>
-                    ${locked ? `<span class="locked">${locked}</span>` : ''}
-                `;
-                div.onclick = () => {
-                    if (userKeys < c.cost) {
-                        showResult('❌ Недостаточно ключей. Пригласите друзей!', false);
-                        return;
-                    }
-                    openCase(c);
-                };
-                container.appendChild(div);
+        const overlay = document.getElementById('animationOverlay');
+        const strip = document.getElementById('slotStrip');
+        const resultDiv = document.getElementById('resultText');
+
+        function startSlotAnimation(caseIndex) {
+            const c = cases[caseIndex];
+            const all = c.items;
+
+            const scrollItems = [];
+            for (let i = 0; i < 25; i++) {
+                scrollItems.push(all[Math.floor(Math.random() * all.length)]);
+            }
+
+            const rand = Math.random() * 100;
+            let winItem;
+            if (rand < 5) {
+                winItem = all[c.expensive[Math.floor(Math.random() * c.expensive.length)]];
+            } else {
+                winItem = all[c.cheap[Math.floor(Math.random() * c.cheap.length)]];
+            }
+            scrollItems.push(winItem);
+
+            strip.innerHTML = '';
+            scrollItems.forEach(item => {
+                const slotDiv = document.createElement('div');
+                slotDiv.className = 'slotItem';
+                const img = document.createElement('img');
+                img.src = item.img;
+                img.alt = item.name;
+                slotDiv.appendChild(img);
+                strip.appendChild(slotDiv);
             });
+
+            strip.style.transition = 'none';
+            strip.style.transform = 'translateX(0)';
+            resultDiv.classList.remove('show');
+            overlay.style.display = 'block';
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    const itemWidth = 91;
+                    const totalScroll = (scrollItems.length - 3) * itemWidth;
+                    strip.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.35, 1.0)';
+                    strip.style.transform = `translateX(-${totalScroll}px)`;
+                });
+            });
+
+            setTimeout(() => {
+                resultDiv.innerHTML = `✨ Выпало: <b>${winItem.name}</b>`;
+                resultDiv.classList.add('show');
+                tg.sendData(JSON.stringify({ skin: winItem.name }));
+
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    resultDiv.classList.remove('show');
+                }, 2500);
+            }, 4100);
         }
 
-        function openCase(caseData) {
-            const prizes = caseData.items;
-            const prize = prizes[Math.floor(Math.random() * prizes.length)];
-            userKeys -= caseData.cost;
-            document.getElementById('keysCount').innerText = userKeys;
-            renderCases('standardCases', standardCases);
-            renderCases('referralCases', referralCases);
-            showResult(`✨ Вы открыли "${caseData.name}"!<br>Выпало: <b>${prize}</b>`, true);
-            tg.sendData(JSON.stringify({ case: caseData.name, prize: prize }));
-        }
-
-        function showResult(text, success) {
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = text;
-            resultDiv.classList.add('show');
-            resultDiv.style.background = success ? '#1e1e32' : '#3a2020';
-            setTimeout(() => resultDiv.classList.remove('show'), 3000);
-        }
-
-        // Инициализация
-        renderCases('standardCases', standardCases);
-        renderCases('referralCases', referralCases);
+        overlay.onclick = () => {
+            overlay.style.display = 'none';
+            resultDiv.classList.remove('show');
+        };
     </script>
 </body>
 </html>
