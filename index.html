@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Бомж кейс • Мини-Апп</title>
+  <title>Бомж кейс</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -16,66 +16,44 @@
       padding: 16px;
       color: #fff;
     }
-    .app { width: 100%; max-width: 400px; }
+    .app { width: 100%; max-width: 420px; }
 
-    /* Экран выбора кейса */
-    .cases-grid { display: flex; flex-direction: column; gap: 16px; }
-    .case-card {
-      background: linear-gradient(145deg, #1e222a, #171a21);
-      border: 2px solid #c9a24d;
-      border-radius: 20px;
-      padding: 20px 16px;
+    /* Вкладки */
+    .tabs {
       display: flex;
-      align-items: center;
-      gap: 16px;
+      gap: 4px;
+      margin-bottom: 16px;
+      background: #0e0f14;
+      border-radius: 12px;
+      padding: 4px;
+    }
+    .tab {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #8892a4;
+      font-weight: 600;
+      padding: 10px 4px;
+      border-radius: 10px;
       cursor: pointer;
-      transition: transform 0.2s;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+      transition: background 0.2s;
+      font-size: 13px;
     }
-    .case-card:active { transform: scale(0.97); }
-    .case-icon {
-      width: 64px; height: 64px;
-      border-radius: 16px;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle at 30% 30%, #f6c358, #8b691b);
-      box-shadow: 0 0 20px rgba(246,195,88,0.5);
-      flex-shrink: 0;
+    .tab.active {
+      background: #c9a24d;
+      color: #1a1d23;
     }
-    .case-icon img { width: 100%; height: 100%; object-fit: cover; }
-    .case-info h3 {
-      font-size: 18px; font-weight: 700;
-      background: linear-gradient(180deg, #f6c358, #e0911a);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .case-info .price-tag { font-size: 14px; color: #a0aab4; margin-top: 4px; }
-    .case-info .price-tag span { color: #f6c358; font-weight: 700; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
 
-    /* Экран открытия */
-    .open-screen { display: none; flex-direction: column; }
-    .back-btn {
-      background: none; border: 1px solid #2a2d35; color: #8892a4;
-      padding: 8px 14px; border-radius: 20px; font-size: 14px; cursor: pointer;
-      margin-bottom: 16px; align-self: flex-start;
-    }
-    .case-header { text-align: center; margin-bottom: 20px; }
-    .case-header h2 {
-      font-size: 22px; font-weight: 700; margin-bottom: 4px;
-      background: linear-gradient(180deg, #f6c358, #e0911a);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .case-header .price { font-size: 14px; color: #a0aab4; }
-
-    /* Лента */
+    /* Рулетка */
     .roulette-strip-wrapper {
-      background: #0e0f14; border-radius: 16px; padding: 16px 0;
-      margin-bottom: 20px; border: 1px solid #2a2d35; position: relative;
+      background: #0e0f14;
+      border-radius: 16px;
+      padding: 16px 0;
+      margin-bottom: 20px;
+      border: 1px solid #2a2d35;
+      position: relative;
     }
     .indicator {
       position: absolute; left: 50%; transform: translateX(-50%); z-index: 10;
@@ -94,11 +72,7 @@
       border-bottom: 12px solid #f6c358;
     }
     .strip-viewport { width: 100%; overflow: hidden; position: relative; }
-    .strip-track {
-      display: flex;
-      transition: transform 0.1s cubic-bezier(0.25, 0.1, 0.25, 1);
-      will-change: transform;
-    }
+    .strip-track { display: flex; will-change: transform; }
     .skin-item {
       flex: 0 0 130px; height: 110px; display: flex;
       flex-direction: column; align-items: center; justify-content: center;
@@ -113,28 +87,21 @@
     .bg-expensive { background: radial-gradient(circle, #e74c3c44 0%, #e74c3c11 70%, transparent 100%); }
     .bg-impossible { background: radial-gradient(circle, #f1c40f44 0%, #f1c40f11 70%, transparent 100%); }
 
-    /* Кнопки */
     .buttons-row { display: flex; gap: 10px; margin-bottom: 20px; }
     .btn {
       flex: 1; border: none; font-weight: 700; font-size: 16px;
       padding: 14px 0; border-radius: 50px; cursor: pointer;
-      transition: transform 0.1s, box-shadow 0.2s;
     }
-    .btn:active { transform: scale(0.96); }
-    .btn:disabled { opacity: 0.5; pointer-events: none; }
     .btn-open {
       background: linear-gradient(180deg, #f6c358, #d4941a);
       color: #1a1d23;
-      box-shadow: 0 6px 20px rgba(201,162,77,0.3);
     }
-    .btn-fast {
-      background: transparent; border: 2px solid #c9a24d; color: #c9a24d;
-    }
+    .btn-fast { background: transparent; border: 2px solid #c9a24d; color: #c9a24d; }
+    .btn:disabled { opacity: 0.5; pointer-events: none; }
 
-    /* Содержимое */
     .case-contents {
       background: #14171e; border-radius: 16px; padding: 16px;
-      border: 1px solid #2a2d35;
+      border: 1px solid #2a2d35; margin-bottom: 16px;
     }
     .case-contents h4 { font-size: 14px; color: #8892a4; margin-bottom: 12px; }
     .content-row {
@@ -146,33 +113,64 @@
     .content-skin img { width: 36px; height: 36px; object-fit: contain; }
     .content-skin span { font-size: 13px; color: #d0d0d0; }
     .content-chance { font-size: 12px; color: #8892a4; }
-    .status-msg { text-align: center; margin-top: 16px; font-size: 14px; color: #f6c358; }
+
+    /* Инвентарь / История */
+    .skin-list { display: flex; flex-direction: column; gap: 12px; }
+    .skin-card {
+      display: flex; align-items: center; gap: 12px;
+      background: #1e222a; padding: 12px; border-radius: 12px;
+    }
+    .skin-card img { width: 60px; height: 60px; object-fit: contain; }
+    .skin-info { flex: 1; }
+    .skin-info .skin-name { font-weight: 600; color: #fff; }
+    .skin-info .skin-price { color: #8892a4; font-size: 13px; }
+    .withdraw-btn {
+      background: #c9a24d; border: none; color: #1a1d23;
+      font-weight: 700; padding: 8px 16px; border-radius: 20px; cursor: pointer;
+    }
+
+    /* Профиль */
+    .profile-section { background: #1e222a; border-radius: 16px; padding: 20px; }
+    .input-field {
+      width: 100%; padding: 12px; background: #0e0f14;
+      border: 1px solid #2a2d35; border-radius: 8px; color: #fff;
+      margin-bottom: 12px;
+    }
+    .save-button {
+      background: linear-gradient(180deg, #f6c358, #d4941a);
+      border: none; padding: 12px; width: 100%; border-radius: 8px;
+      font-weight: 700; color: #1a1d23; cursor: pointer;
+    }
+
+    /* Модальное окно */
+    .popup {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8); display: none;
+      justify-content: center; align-items: center; z-index: 1000;
+    }
+    .popup-content {
+      background: #1e222a; border-radius: 20px; padding: 24px;
+      text-align: center; max-width: 300px; width: 90%;
+    }
+    .popup-content img { max-width: 150px; max-height: 120px; }
+    .popup-content h3 { margin: 12px 0 4px; }
+    .popup-content .price { color: #c9a24d; font-weight: 700; margin-bottom: 16px; }
   </style>
 </head>
 <body>
 <div class="app">
-  <!-- ЭКРАН ВЫБОРА КЕЙСА -->
-  <div id="casesScreen">
-    <div class="case-card" data-case="1">
-      <div class="case-icon">
-        <!-- Заменил на прямую ссылку, чтобы точно грузилось -->
-        <img src="https://i.ytimg.com/vi/vEnOnKZR1pM/maxresdefault.jpg" alt="Бомж кейс" crossorigin="anonymous">
-      </div>
-      <div class="case-info">
-        <h3>Бомж кейс</h3>
-        <div class="price-tag">Стоимость: <span>3 реферала</span></div>
-      </div>
-    </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="case">🎁 Кейс</button>
+    <button class="tab" data-tab="inventory">📦 Инвентарь</button>
+    <button class="tab" data-tab="history">📜 История</button>
+    <button class="tab" data-tab="profile">⚙️ Профиль</button>
   </div>
 
-  <!-- ЭКРАН ОТКРЫТИЯ -->
-  <div id="openScreen" class="open-screen">
-    <button class="back-btn" id="backBtn">← Назад</button>
-    <div class="case-header">
-      <h2>Бомж кейс</h2>
-      <div class="price">Открытие за 3 реферала</div>
+  <!-- Вкладка Кейс -->
+  <div id="caseTab" class="tab-content active">
+    <div class="case-header" style="text-align:center; margin-bottom:16px;">
+      <h2 style="background: linear-gradient(180deg,#f6c358,#e0911a); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">Бомж кейс</h2>
     </div>
-
     <div class="roulette-strip-wrapper">
       <div class="indicator indicator-top"></div>
       <div class="indicator indicator-bottom"></div>
@@ -180,19 +178,51 @@
         <div class="strip-track" id="stripTrack"></div>
       </div>
     </div>
-
     <div class="buttons-row">
       <button class="btn btn-open" id="btnOpen">🔓 Открыть</button>
       <button class="btn btn-fast" id="btnFast">⚡ Быстро</button>
     </div>
-
     <div class="case-contents" id="caseContents"></div>
-    <div class="status-msg" id="statusMsg"></div>
+    <div class="status-msg" id="statusMsg" style="text-align:center; color:#c9a24d;"></div>
+  </div>
+
+  <!-- Вкладка Инвентарь -->
+  <div id="inventoryTab" class="tab-content">
+    <div class="skin-list" id="inventoryList">Загрузка...</div>
+  </div>
+
+  <!-- Вкладка История -->
+  <div id="historyTab" class="tab-content">
+    <div class="skin-list" id="historyList">Загрузка...</div>
+  </div>
+
+  <!-- Вкладка Профиль -->
+  <div id="profileTab" class="tab-content">
+    <div class="profile-section">
+      <p style="margin-bottom:12px;">🔗 Введите трейд-ссылку Steam:</p>
+      <input type="text" id="tradeLinkInput" class="input-field" placeholder="https://steamcommunity.com/tradeoffer/...">
+      <button class="save-button" onclick="saveTradeLink()">Сохранить</button>
+      <p id="profileStatus" style="margin-top:12px; color:#8892a4;"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно выпадения -->
+<div class="popup" id="popup">
+  <div class="popup-content">
+    <img id="popupImg" src="" alt="Скин">
+    <h3 id="popupName"></h3>
+    <p class="price" id="popupPrice"></p>
+    <button class="btn btn-open" onclick="hidePopup()">OK</button>
   </div>
 </div>
 
 <script>
-  // Конфиг скинов
+  const tg = window.Telegram.WebApp;
+  const user = tg.initDataUnsafe.user;
+  const userId = user.id;
+
+  // Конфиг скинов (как раньше)
   const skins = [
     { name: 'M4A4 | Choppa (FT)', price: '~9.5 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Choppa%20(Field-Tested).webp', rarity: 'expensive', chance: 3 },
     { name: 'AK-47 | Olive Polycam (WW)', price: '~8.7 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20Olive%20Polycam%20(Field-Tested).webp', rarity: 'expensive', chance: 3 },
@@ -205,31 +235,23 @@
     { name: 'Glock-18 | Moonrise (FT)', price: '~98 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Moonrise%20(Field-Tested).webp', rarity: 'impossible', chance: 1 }
   ];
 
-  // Пул розыгрыша (без невозможного)
+  // Пул (без impossible)
   const pool = [];
-  skins.forEach(s => {
-    if (s.rarity !== 'impossible') {
-      for (let i = 0; i < s.chance; i++) pool.push(s);
-    }
-  });
+  skins.forEach(s => { if (s.rarity!=='impossible') for (let i=0; i<s.chance; i++) pool.push(s); });
 
-  const casesScreen = document.getElementById('casesScreen');
-  const openScreen  = document.getElementById('openScreen');
-  const backBtn     = document.getElementById('backBtn');
-  const stripTrack  = document.getElementById('stripTrack');
-  const btnOpen     = document.getElementById('btnOpen');
-  const btnFast     = document.getElementById('btnFast');
-  const caseContents= document.getElementById('caseContents');
-  const statusMsg   = document.getElementById('statusMsg');
-
+  // DOM элементы
+  const stripTrack = document.getElementById('stripTrack');
+  const btnOpen = document.getElementById('btnOpen');
+  const btnFast = document.getElementById('btnFast');
+  const caseContents = document.getElementById('caseContents');
+  const statusMsg = document.getElementById('statusMsg');
   let isRolling = false;
+  const itemWidth = 138;
 
-  // Построение ленты и списка
   function buildStripAndContents() {
     stripTrack.innerHTML = '';
-    // Увеличиваем повтор, чтобы лента была длиннее и прокручивалось много скинов
-    const repeatTimes = 20; // было 6, стало 8 – больше элементов, выше скорость визуально
-    for (let r = 0; r < repeatTimes; r++) {
+    const repeat = 12;
+    for (let r=0; r<repeat; r++) {
       skins.forEach(skin => {
         const div = document.createElement('div');
         div.className = `skin-item bg-${skin.rarity}`;
@@ -237,87 +259,41 @@
         stripTrack.appendChild(div);
       });
     }
-
     caseContents.innerHTML = '<h4>📦 Содержимое кейса</h4>';
     skins.forEach(skin => {
       const row = document.createElement('div');
       row.className = 'content-row';
-      row.innerHTML = `
-        <div class="content-skin">
-          <img src="${skin.img}" alt="${skin.name}">
-          <span>${skin.name}</span>
-        </div>
-        <div class="content-chance">${skin.chance}%</div>
-      `;
+      row.innerHTML = `<div class="content-skin"><img src="${skin.img}" alt="${skin.name}"><span>${skin.name}</span></div><div class="content-chance">${skin.chance}%</div>`;
       caseContents.appendChild(row);
     });
   }
 
-  function openCase() {
-    buildStripAndContents();
-    casesScreen.style.display = 'none';
-    openScreen.style.display = 'flex';
-    stripTrack.style.transition = 'none';
-    stripTrack.style.transform = 'translateX(0)';
-    statusMsg.textContent = '';
-  }
+  function getRandomSkin() { return pool[Math.floor(Math.random()*pool.length)]; }
 
-  function goBack() {
-    openScreen.style.display = 'none';
-    casesScreen.style.display = 'flex';
-  }
-
-  function getRandomSkin() {
-    return pool[Math.floor(Math.random() * pool.length)];
-  }
-
-  function roll(finalSkin, speedMode = 'normal') {
-    const itemWidth = 138; // 130px + margin
+  function roll(finalSkin, speedMode='normal') {
     const totalItems = stripTrack.children.length;
-    // Ищем индекс финального скина в ленте
-    let finalIndex = -1;
     const targetName = finalSkin.name.split(' (')[0];
-    for (let i = 0; i < totalItems; i++) {
-      const nameEl = stripTrack.children[i].querySelector('.name');
-      if (nameEl && nameEl.textContent === targetName) {
-        finalIndex = i;
-        break;
+    let finalIndex = 0;
+    for (let i=0; i<totalItems; i++) {
+      if (stripTrack.children[i].querySelector('.name').textContent === targetName) {
+        finalIndex = i; break;
       }
     }
-    // Если по какой-то причине не нашли, берём последний подходящий
-    if (finalIndex === -1) {
-      for (let i = totalItems - 1; i >= 0; i--) {
-        const nameEl = stripTrack.children[i].querySelector('.name');
-        if (nameEl && nameEl.textContent === targetName) {
-          finalIndex = i;
-          break;
-        }
-      }
-    }
-    if (finalIndex === -1) finalIndex = 0;
-
-    // Делаем так, чтобы финальный скин оказался под указателем
     const viewportWidth = document.getElementById('viewport').clientWidth;
-    const startTrans = -finalIndex * itemWidth + viewportWidth / 2 - itemWidth / 2;
-    const duration = speedMode === 'fast' ? 2500 : 7000;
-
+    const extraRotations = 3;
+    const extraOffset = -extraRotations * totalItems * itemWidth;
+    const finalOffset = -finalIndex * itemWidth + viewportWidth/2 - itemWidth/2;
+    const startTrans = extraOffset + finalOffset;
+    const duration = speedMode==='fast' ? 2500 : 7000;
     const startTime = performance.now();
-    const initialTransform = 0;
 
     function animate(now) {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const ease = 1 - Math.pow(1 - progress, 3); // плавное замедление
-      const currentOffset = initialTransform + (startTrans - initialTransform) * ease;
-      stripTrack.style.transform = `translateX(${currentOffset}px)`;
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        finishRoll(finalSkin);
-      }
+      const progress = Math.min((now-startTime)/duration, 1);
+      const ease = 1 - Math.pow(1-progress, 3);
+      stripTrack.style.transform = `translateX(${startTrans * ease}px)`;
+      if (progress < 1) requestAnimationFrame(animate);
+      else finishRoll(finalSkin);
     }
-
     requestAnimationFrame(animate);
   }
 
@@ -325,33 +301,100 @@
     isRolling = false;
     btnOpen.disabled = false;
     btnFast.disabled = false;
-    if (skin.rarity === 'impossible') {
-      statusMsg.innerHTML = `🔥 НЕВЕРОЯТНО! Выпал ${skin.name} (${skin.price})`;
-    } else {
-      statusMsg.innerHTML = `🎉 Выпал: ${skin.name} (${skin.price})`;
-    }
+    showPopup(skin);
+    // Отправляем в бота
+    tg.sendData(JSON.stringify({
+      action: "drop_skin",
+      skin: { name: skin.name, price: skin.price, image: skin.img, rarity: skin.rarity }
+    }));
   }
 
-  function startOpen(speed = 'normal') {
+  function startOpen(speed='normal') {
     if (isRolling) return;
     isRolling = true;
     btnOpen.disabled = true;
     btnFast.disabled = true;
-    statusMsg.textContent = speed === 'fast' ? 'Быстрое открытие...' : 'Крутим...';
-    const final = getRandomSkin();
-    roll(final, speed);
+    statusMsg.textContent = speed==='fast' ? 'Быстрое открытие...' : 'Крутим...';
+    roll(getRandomSkin(), speed);
   }
 
-  document.querySelectorAll('.case-card').forEach(card => {
-    card.addEventListener('click', openCase);
+  // Модальное окно
+  function showPopup(skin) {
+    document.getElementById('popupImg').src = skin.img;
+    document.getElementById('popupName').textContent = skin.name;
+    document.getElementById('popupPrice').textContent = skin.price;
+    document.getElementById('popup').style.display = 'flex';
+  }
+  function hidePopup() {
+    document.getElementById('popup').style.display = 'none';
+  }
+
+  // Инвентарь и История
+  async function loadInventory() {
+    const res = await fetch(`/api/inventory?user_id=${userId}`);
+    const skins = await res.json();
+    const list = document.getElementById('inventoryList');
+    if (!skins.length) { list.innerHTML = 'Пусто.'; return; }
+    list.innerHTML = skins.map(s => `
+      <div class="skin-card">
+        <img src="${s.image}" alt="${s.name}">
+        <div class="skin-info">
+          <div class="skin-name">${s.name}</div>
+          <div class="skin-price">${s.price}</div>
+        </div>
+        <button class="withdraw-btn" onclick="withdrawSkin(${s.id})">Вывести</button>
+      </div>
+    `).join('');
+  }
+
+  async function loadHistory() {
+    const res = await fetch(`/api/history?user_id=${userId}`);
+    const hist = await res.json();
+    const list = document.getElementById('historyList');
+    if (!hist.length) { list.innerHTML = 'Пусто.'; return; }
+    list.innerHTML = hist.map(s => `
+      <div class="skin-card">
+        <img src="${s.image}" alt="${s.name}">
+        <div class="skin-info">
+          <div class="skin-name">${s.name}</div>
+          <div class="skin-price">${s.price}</div>
+          <div class="skin-date" style="font-size:12px; color:#8892a4;">${s.date ? s.date.substring(0,10) : ''}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function withdrawSkin(skinId) {
+    tg.sendData(JSON.stringify({ action: "withdraw_skin", skin_id: skinId }));
+    alert('Заявка на вывод отправлена. Ожидайте до 2 дней.');
+  }
+
+  function saveTradeLink() {
+    const link = document.getElementById('tradeLinkInput').value.trim();
+    if (!link.startsWith('https://steamcommunity.com/tradeoffer')) {
+      document.getElementById('profileStatus').textContent = '❌ Неверный формат ссылки.';
+      return;
+    }
+    tg.sendData(JSON.stringify({ action: "update_trade_link", link }));
+    document.getElementById('profileStatus').textContent = '✅ Ссылка сохранена.';
+  }
+
+  // Переключение вкладок
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById(btn.dataset.tab + 'Tab').classList.add('active');
+      if (btn.dataset.tab === 'inventory') loadInventory();
+      if (btn.dataset.tab === 'history') loadHistory();
+    });
   });
 
-  backBtn.addEventListener('click', goBack);
+  // Инициализация
+  buildStripAndContents();
   btnOpen.addEventListener('click', () => startOpen('normal'));
   btnFast.addEventListener('click', () => startOpen('fast'));
-
-  casesScreen.style.display = 'flex';
-  openScreen.style.display = 'none';
 </script>
 </body>
 </html>
