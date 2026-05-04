@@ -12,9 +12,8 @@
             text-align: center;
             padding: 20px;
             box-sizing: border-box;
-            overflow: hidden;
-            height: 100vh;
             margin: 0;
+            min-height: 100vh;
         }
         h2 { margin-top: 0; }
         .cases {
@@ -38,53 +37,69 @@
         .case .name { font-weight: bold; margin: 5px 0; }
         .case .cost { color: gold; font-size: 14px; }
 
-        /* Окно подтверждения */
-        #confirmOverlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.9);
-            z-index: 200;
-            padding: 40px 20px;
-        }
-        #confirmCase {
-            font-size: 80px;
-            margin-bottom: 20px;
-        }
-        #openBtn {
-            background: gold;
-            border: none;
-            padding: 15px 40px;
-            border-radius: 30px;
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        #openBtn:active { background: #e6c200; transform: scale(0.95); }
-        #cancelBtn {
-            background: transparent;
-            border: 2px solid #aaa;
-            color: #aaa;
-            padding: 12px 30px;
-            border-radius: 30px;
-            font-size: 16px;
-            margin-left: 15px;
-            cursor: pointer;
-        }
-
-        /* Анимация открытия */
-        #animationOverlay {
+        /* Модальное окно содержимого кейса */
+        #caseModal {
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.95);
             z-index: 100;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .modal-content {
+            max-width: 380px;
+            margin: 40px auto;
+            background: #1e1e3f;
+            border-radius: 25px;
+            padding: 25px;
+        }
+        .skin-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .skin-card {
+            width: 100px;
+            background: #2c2c54;
+            border-radius: 15px;
+            padding: 10px;
+            font-size: 12px;
+        }
+        .skin-card img {
+            width: 70px;
+            height: 70px;
+            display: block;
+            margin: 0 auto 5px;
+        }
+        .open-btn {
+            background: gold;
+            color: black;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: 0.2s;
+        }
+        .open-btn:active { background: #e6c200; transform: scale(0.95); }
+
+        /* Анимация прокрутки */
+        #animationOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 101;
             padding: 30px 10px;
         }
         #slotWindow {
             width: 90%;
-            height: 140px;
+            height: 100px;
             margin: 60px auto 20px;
             background: #2c2c44;
             border: 3px solid gold;
@@ -92,21 +107,14 @@
             overflow: hidden;
             position: relative;
         }
-        /* Указатель – крупная золотая стрелка с анимацией */
         #pointer {
             position: absolute;
             left: 50%;
-            top: -30px;
+            top: -26px;
             transform: translateX(-50%);
             color: gold;
             font-size: 42px;
             z-index: 5;
-            filter: drop-shadow(0 0 10px gold);
-            animation: pointerBounce 0.8s infinite alternate;
-        }
-        @keyframes pointerBounce {
-            from { top: -30px; }
-            to { top: -20px; }
         }
         #slotStrip {
             display: flex;
@@ -114,23 +122,19 @@
             will-change: transform;
         }
         .slotItem {
-            min-width: 120px;
-            max-width: 120px;
-            padding: 8px;
+            min-width: 90px;
+            max-width: 90px;
+            height: 100px;
+            padding: 5px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-right: 2px solid gold;
-            background: #1e1e3f;
-        }
-        .slotItem:nth-child(even) {
-            background: #22224a;
+            border-right: 1px solid #555;
+            background: #252550;
         }
         .slotItem img {
-            max-width: 100px;
-            max-height: 100px;
-            filter: drop-shadow(0 0 5px black);
-            /* Убираем mix-blend-mode – скины будут яркими */
+            width: 80px;
+            height: 80px;
         }
 
         #resultContainer {
@@ -159,9 +163,7 @@
             text-align: center;
             margin-bottom: 10px;
         }
-        #tradeUrlInput::placeholder {
-            color: #aaa;
-        }
+        #tradeUrlInput::placeholder { color: #aaa; }
         #withdrawBtn {
             background: gold;
             color: black;
@@ -171,26 +173,25 @@
             font-weight: bold;
             font-size: 16px;
             cursor: pointer;
-            transition: 0.2s;
         }
-        #withdrawBtn:active {
-            background: #e6c200;
-            transform: scale(0.95);
-        }
+        #withdrawBtn:active { background: #e6c200; transform: scale(0.95); }
     </style>
 </head>
 <body>
     <h2>🎁 Открой кейс Faceit LFG</h2>
     <div class="cases" id="casesContainer"></div>
 
-    <!-- Окно подтверждения -->
-    <div id="confirmOverlay">
-        <div id="confirmCase"></div>
-        <div style="margin: 20px 0; font-size: 18px;" id="confirmCost"></div>
-        <button id="openBtn">🔓 Открыть</button>
-        <button id="cancelBtn">Отмена</button>
+    <!-- Модальное окно с содержимым кейса -->
+    <div id="caseModal">
+        <div class="modal-content">
+            <h3 id="modalTitle"></h3>
+            <div id="skinListContainer" class="skin-list"></div>
+            <button id="openCaseBtn" class="open-btn">🔑 Открыть</button>
+            <button id="closeModalBtn" style="background: #555; color: white; border: none; padding: 10px 20px; border-radius: 20px; margin-top: 10px;">Отмена</button>
+        </div>
     </div>
 
+    <!-- Анимация прокрутки -->
     <div id="animationOverlay">
         <div id="slotWindow">
             <div id="pointer">▼</div>
@@ -210,6 +211,7 @@
         tg.expand();
         if (tg.requestFullscreen) tg.requestFullscreen();
 
+        // Данные кейса
         const cases = [
             {
                 name: "Обычный",
@@ -232,38 +234,48 @@
             }
         ];
 
+        // ====== ОТРИСОВКА ГЛАВНОГО МЕНЮ ======
         const container = document.getElementById('casesContainer');
         cases.forEach((c, index) => {
             const div = document.createElement('div');
             div.className = 'case';
             div.innerHTML = `<span class="icon">${c.icon}</span><div class="name">${c.name}</div><div class="cost">${c.cost}</div>`;
-            div.onclick = () => showConfirm(index);
+            div.onclick = () => showCaseModal(index);
             container.appendChild(div);
         });
 
-        const confirmOverlay = document.getElementById('confirmOverlay');
-        const confirmCase = document.getElementById('confirmCase');
-        const confirmCost = document.getElementById('confirmCost');
-        const openBtn = document.getElementById('openBtn');
-        const cancelBtn = document.getElementById('cancelBtn');
-        let selectedCaseIndex = 0;
+        // ====== МОДАЛЬНОЕ ОКНО СОДЕРЖИМОГО ======
+        const modal = document.getElementById('caseModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const skinListContainer = document.getElementById('skinListContainer');
+        const openCaseBtn = document.getElementById('openCaseBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
 
-        function showConfirm(index) {
-            selectedCaseIndex = index;
+        let currentCaseIndex = null;
+
+        function showCaseModal(index) {
+            currentCaseIndex = index;
             const c = cases[index];
-            confirmCase.textContent = c.icon;
-            confirmCost.textContent = `${c.name} – стоимость: ${c.cost}`;
-            confirmOverlay.style.display = 'block';
-            openBtn.onclick = () => {
-                confirmOverlay.style.display = 'none';
-                startSlotAnimation(index);
-            };
+            modalTitle.textContent = c.icon + ' ' + c.name + ' (' + c.cost + ')';
+            skinListContainer.innerHTML = '';
+
+            c.items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'skin-card';
+                card.innerHTML = `<img src="${item.img}" alt="${item.name}"><div>${item.name}</div>`;
+                skinListContainer.appendChild(card);
+            });
+
+            modal.style.display = 'block';
         }
 
-        cancelBtn.onclick = () => {
-            confirmOverlay.style.display = 'none';
+        closeModalBtn.onclick = () => { modal.style.display = 'none'; };
+        openCaseBtn.onclick = () => {
+            modal.style.display = 'none';
+            startSlotAnimation(currentCaseIndex);
         };
 
+        // ====== АНИМАЦИЯ ПРОКРУТКИ ======
         const overlay = document.getElementById('animationOverlay');
         const strip = document.getElementById('slotStrip');
         const resultContainer = document.getElementById('resultContainer');
@@ -278,11 +290,13 @@
             resultContainer.classList.remove('show');
             tradeUrlInput.value = '';
 
+            // Формируем ленту: 40 случайных + выигрышный + ещё 10 для заполнения
             const scrollItems = [];
-            for (let i = 0; i < 30; i++) {
+            for (let i = 0; i < 40; i++) {
                 scrollItems.push(all[Math.floor(Math.random() * all.length)]);
             }
 
+            // Определяем победителя
             const rand = Math.random() * 100;
             let winItem;
             if (rand < 5) {
@@ -292,6 +306,12 @@
             }
             scrollItems.push(winItem);
 
+            // Дополнительные скины после выигрышного, чтобы не было пустоты
+            for (let i = 0; i < 10; i++) {
+                scrollItems.push(all[Math.floor(Math.random() * all.length)]);
+            }
+
+            // Рендер
             strip.innerHTML = '';
             scrollItems.forEach(item => {
                 const slotDiv = document.createElement('div');
@@ -303,19 +323,22 @@
                 strip.appendChild(slotDiv);
             });
 
+            // Сброс позиции
             strip.style.transition = 'none';
             strip.style.transform = 'translateX(0)';
             overlay.style.display = 'block';
 
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    const itemWidth = 122; // 120px + 2px border
-                    const totalScroll = (scrollItems.length - 3) * itemWidth;
+                    const itemWidth = 91;
+                    // Останавливаемся так, чтобы выигрышный элемент был под указателем (он 41-й, индекс 40)
+                    const targetScroll = 40 * itemWidth;   // 41-й элемент (индекс 40) окажется по центру
                     strip.style.transition = 'transform 7s cubic-bezier(0.15, 0.85, 0.35, 1.0)';
-                    strip.style.transform = `translateX(-${totalScroll}px)`;
+                    strip.style.transform = `translateX(-${targetScroll}px)`;
                 });
             });
 
+            // Показываем результат через 7.5 сек
             setTimeout(() => {
                 resultSkin.innerHTML = `✨ Выпало: <b>${winItem.name}</b>`;
                 resultContainer.classList.add('show');
@@ -326,23 +349,20 @@
                         alert('Введите трейд-ссылку!');
                         return;
                     }
-                    tg.sendData(JSON.stringify({
-                        skin: winItem.name,
-                        trade_link: tradeLink
-                    }));
+                    tg.sendData(JSON.stringify({ skin: winItem.name, trade_link: tradeLink }));
                     alert('Запрос на вывод отправлен!');
                     overlay.style.display = 'none';
                     resultContainer.classList.remove('show');
                 };
-            }, 7200);
+            }, 7500);
         }
 
-        overlay.addEventListener('click', function(e) {
+        overlay.onclick = (e) => {
             if (e.target === overlay) {
                 overlay.style.display = 'none';
                 resultContainer.classList.remove('show');
             }
-        });
+        };
     </script>
 </body>
 </html>
