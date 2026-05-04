@@ -1,142 +1,389 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Faceit Cases</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Faceit Cases</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #1a1a2e;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            margin: 0;
+            min-height: 100vh;
+        }
+        h2 { margin-top: 0; }
+        .cases {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .case {
+            background: #16213e;
+            border-radius: 20px;
+            padding: 25px 15px;
+            width: 120px;
+            cursor: pointer;
+            transition: 0.2s;
+            text-align: center;
+        }
+        .case:active { transform: scale(0.95); background: #0f3460; }
+        .case .icon { font-size: 45px; display: block; margin-bottom: 10px; }
+        .case .name { font-weight: bold; margin: 5px 0; }
+        .case .cost { color: gold; font-size: 14px; }
 
-<style>
-body {
-    font-family: Arial;
-    background: #1a1a2e;
-    color: white;
-    text-align: center;
-}
+        /* Модальное окно содержимого кейса */
+        #caseModal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 100;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .modal-content {
+            max-width: 380px;
+            margin: 40px auto;
+            background: #1e1e3f;
+            border-radius: 25px;
+            padding: 25px;
+        }
+        .skin-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .skin-card {
+            width: 100px;
+            background: #2c2c54;
+            border-radius: 15px;
+            padding: 10px;
+            font-size: 12px;
+        }
+        .skin-card img {
+            width: 70px;
+            height: 70px;
+            display: block;
+            margin: 0 auto 5px;
+        }
+        .open-btn {
+            background: gold;
+            color: black;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: 0.2s;
+        }
+        .open-btn:active { background: #e6c200; transform: scale(0.95); }
 
-.case {
-    background: #16213e;
-    border-radius: 15px;
-    padding: 20px;
-    margin: 10px;
-    cursor: pointer;
-}
+        /* Анимация прокрутки */
+        #animationOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 101;
+            padding: 30px 10px;
+        }
+        #slotWindow {
+            width: 90%;
+            height: 100px;
+            margin: 60px auto 20px;
+            background: #2c2c44;
+            border: 3px solid gold;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        #pointer {
+            position: absolute;
+            left: 50%;
+            top: -26px;
+            transform: translateX(-50%);
+            color: gold;
+            font-size: 42px;
+            z-index: 5;
+        }
+        #slotStrip {
+            display: flex;
+            transition: transform 7s cubic-bezier(0.15, 0.85, 0.35, 1.0);
+            will-change: transform;
+        }
+        .slotItem {
+            min-width: 90px;
+            max-width: 90px;
+            height: 100px;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px solid #555;
+            background: #252550;
+        }
+        .slotItem img {
+            width: 80px;
+            height: 80px;
+        }
 
-#animationOverlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.95);
-}
-
-#resultContainer {
-    margin-top: 50px;
-}
-
-button {
-    padding: 12px 20px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-}
-</style>
+        #resultContainer {
+            margin-top: 30px;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: 0.5s;
+        }
+        #resultContainer.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+        #resultSkin {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        #tradeUrlInput {
+            width: 80%;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            background: #2c2c44;
+            color: white;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        #tradeUrlInput::placeholder { color: #aaa; }
+        #withdrawBtn {
+            background: gold;
+            color: black;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #withdrawBtn:active { background: #e6c200; transform: scale(0.95); }
+    </style>
 </head>
-
 <body>
+    <h2>🎁 Открой кейс Faceit LFG</h2>
+    <div class="cases" id="casesContainer"></div>
 
-<h2>🎁 Открой кейс</h2>
-<div id="casesContainer"></div>
-
-<div id="animationOverlay">
-    <div id="resultContainer">
-        <div id="resultSkin"></div>
-        <input id="tradeUrlInput" placeholder="Трейд ссылка">
-        <br><br>
-        <button id="withdrawBtn">Вывести</button>
+    <!-- Модальное окно с содержимым -->
+    <div id="caseModal">
+        <div class="modal-content">
+            <h3 id="modalTitle"></h3>
+            <div id="skinListContainer" class="skin-list"></div>
+            <button id="openCaseBtn" class="open-btn">🔑 Открыть</button>
+            <button id="closeModalBtn" style="background: #555; color: white; border: none; padding: 10px 20px; border-radius: 20px; margin-top: 10px;">Отмена</button>
+        </div>
     </div>
-</div>
 
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script>
-const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
+    <!-- Анимация прокрутки -->
+    <div id="animationOverlay">
+        <div id="slotWindow">
+            <div id="pointer">▼</div>
+            <div id="slotStrip"></div>
+        </div>
+        <div id="resultContainer">
+            <div id="resultSkin"></div>
+            <input type="text" id="tradeUrlInput" placeholder="Вставьте свою трейд-ссылку">
+            <button id="withdrawBtn">🎁 Вывести</button>
+        </div>
+    </div>
 
-let currentWinItem = null;
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        if (tg.requestFullscreen) tg.requestFullscreen();
 
-// ===== UI =====
-const container = document.getElementById('casesContainer');
-const overlay = document.getElementById('animationOverlay');
-const resultSkin = document.getElementById('resultSkin');
-const tradeInput = document.getElementById('tradeUrlInput');
-const withdrawBtn = document.getElementById('withdrawBtn');
+        // Кейс
+        const cases = [
+            {
+                name: "Обычный",
+                cost: "3 реф.",
+                icon: "📦",
+                items: [
+                    { name: "M4A4 | Choppa (FT)", img: "https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Choppa%20(Field-Tested).webp" },
+                    { name: "AK-47 | Olive Polycam (FT)", img: "https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20Olive%20Polycam%20(Field-Tested).webp" },
+                    { name: "R8 Revolver | Grip (FT)", img: "https://cdn2.csgo.com/item/image/width=916/R8%20Revolver%20%7C%20Grip%20(Field-Tested).webp" },
+                    { name: "M4A4 | Steel Work (FT)", img: "https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Steel%20Work%20(Field-Tested).webp" },
+                    { name: "SSG 08 | Calligrafaux (WW)", img: "https://cdn2.csgo.com/item/image/width=916/SSG%2008%20%7C%20Calligrafaux%20(Well-Worn).webp" },
+                    { name: "Glock-18 | Ocean Topo (FT)", img: "https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Ocean%20Topo%20(Field-Tested).webp" },
+                    { name: "AK-47 | VariCamo Grey (FT)", img: "https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20VariCamo%20Grey%20(Field-Tested).webp" },
+                    { name: "M4A1-S | Wash me plz (FT)", img: "https://cdn2.csgo.com/item/image/width=916/M4A1-S%20%7C%20Wash%20me%20plz%20(Field-Tested).webp" },
+                    { name: "Glock-18 | Moonrise (FT)", img: "https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Moonrise%20(Field-Tested).webp" }
+                ],
+                // Индексы дешёвых (до 10 руб), дорогих (10-100 руб) и недоступного
+                cheap: [3,4,5,6,7],
+                expensive: [0,1,2],
+                unobtainable: [8]   // Moonrise – только для прокрутки
+            }
+        ];
 
-// ===== КЕЙС =====
-const cases = [
-    {
-        name: "Обычный",
-        items: [
-            "AK-47",
-            "M4A1-S",
-            "Glock-18",
-            "AWP"
-        ]
-    }
-];
+        // ====== ОТРИСОВКА ГЛАВНОГО МЕНЮ ======
+        const container = document.getElementById('casesContainer');
+        cases.forEach((c, index) => {
+            const div = document.createElement('div');
+            div.className = 'case';
+            div.innerHTML = `<span class="icon">${c.icon}</span><div class="name">${c.name}</div><div class="cost">${c.cost}</div>`;
+            div.onclick = () => showCaseModal(index);
+            container.appendChild(div);
+        });
 
-// ===== РЕНДЕР =====
-cases.forEach((c, i) => {
-    const div = document.createElement('div');
-    div.className = 'case';
-    div.innerText = c.name;
-    div.onclick = () => openCase(i);
-    container.appendChild(div);
-});
+        // ====== МОДАЛЬНОЕ ОКНО СОДЕРЖИМОГО ======
+        const modal = document.getElementById('caseModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const skinListContainer = document.getElementById('skinListContainer');
+        const openCaseBtn = document.getElementById('openCaseBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        let currentCaseIndex = null;
 
-// ===== ОТКРЫТИЕ =====
-function openCase(index) {
-    const c = cases[index];
+        function showCaseModal(index) {
+            currentCaseIndex = index;
+            const c = cases[index];
+            modalTitle.textContent = c.icon + ' ' + c.name + ' (' + c.cost + ')';
+            skinListContainer.innerHTML = '';
 
-    const win = c.items[Math.floor(Math.random() * c.items.length)];
+            c.items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'skin-card';
+                card.innerHTML = `<img src="${item.img}" alt="${item.name}"><div>${item.name}</div>`;
+                skinListContainer.appendChild(card);
+            });
 
-    overlay.style.display = 'block';
+            modal.style.display = 'block';
+        }
 
-    setTimeout(() => {
-        currentWinItem = win;
-        resultSkin.innerHTML = "Выпало: <b>" + win + "</b>";
-        console.log("🎯 Выпало:", win);
-    }, 1000);
-}
+        closeModalBtn.onclick = () => { modal.style.display = 'none'; };
+        openCaseBtn.onclick = () => {
+            modal.style.display = 'none';
+            startSlotAnimation(currentCaseIndex);
+        };
 
-// ===== КНОПКА ВЫВОДА =====
-withdrawBtn.onclick = () => {
-    console.log("👉 нажали вывод");
+        // ====== АНИМАЦИЯ ПРОКРУТКИ ======
+        const overlay = document.getElementById('animationOverlay');
+        const strip = document.getElementById('slotStrip');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultSkin = document.getElementById('resultSkin');
+        const tradeUrlInput = document.getElementById('tradeUrlInput');
+        const withdrawBtn = document.getElementById('withdrawBtn');
 
-    if (!currentWinItem) {
-        alert("Сначала открой кейс");
-        return;
-    }
+        function startSlotAnimation(caseIndex) {
+            const c = cases[caseIndex];
+            const all = c.items;
 
-    const link = tradeInput.value.trim();
+            resultContainer.classList.remove('show');
+            tradeUrlInput.value = '';
 
-    if (!link) {
-        alert("Вставь трейд ссылку");
-        return;
-    }
+            // Формируем ленту: 30 случайных + выигрышный + 10 дополнительных
+            const scrollItems = [];
+            for (let i = 0; i < 30; i++) {
+                scrollItems.push(all[Math.floor(Math.random() * all.length)]);
+            }
 
-    const payload = {
-        skin: currentWinItem,
-        trade_link: link
-    };
+            // Определяем реального победителя (с учётом шансов, но БЕЗ недоступного)
+            const rand = Math.random() * 100;
+            let winItem;
+            if (rand < 5) {   // 5% на дорогой
+                const expensiveItems = c.expensive.map(idx => all[idx]);
+                winItem = expensiveItems[Math.floor(Math.random() * expensiveItems.length)];
+            } else {          // 95% на дешёвый
+                const cheapItems = c.cheap.map(idx => all[idx]);
+                winItem = cheapItems[Math.floor(Math.random() * cheapItems.length)];
+            }
 
-    console.log("📤 отправка:", payload);
+            // Добавляем победителя в ленту
+            scrollItems.push(winItem);
 
-    tg.sendData(JSON.stringify(payload));
+            // Ещё 10 случайных после победителя, чтобы не было пустоты
+            for (let i = 0; i < 10; i++) {
+                scrollItems.push(all[Math.floor(Math.random() * all.length)]);
+            }
 
-    alert("Отправлено!");
+            // Рендерим ленту
+            strip.innerHTML = '';
+            scrollItems.forEach(item => {
+                const slotDiv = document.createElement('div');
+                slotDiv.className = 'slotItem';
+                const img = document.createElement('img');
+                img.src = item.img;
+                img.alt = item.name;
+                slotDiv.appendChild(img);
+                strip.appendChild(slotDiv);
+            });
 
-    overlay.style.display = 'none';
-};
-</script>
+            // Сбрасываем позицию
+            strip.style.transition = 'none';
+            strip.style.transform = 'translateX(0)';
+            overlay.style.display = 'block';
 
+            // Запускаем плавную анимацию
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    const itemWidth = 91; // ширина ячейки
+                    // Прокручиваем так, чтобы winItem (индекс 30) оказался у левого края окна, но мы хотим по центру.
+                    // В окно помещается width/slotWidth ≈ 3.5 ячейки, поэтому сдвинем на (winIndex - 1.5)
+                    const winIndex = 30; // позиция winItem в scrollItems
+                    const targetScroll = (winIndex - 1.5) * itemWidth;
+                    strip.style.transition = 'transform 6s cubic-bezier(0.15, 0.85, 0.33, 1.0)';
+                    strip.style.transform = `translateX(-${targetScroll}px)`;
+                });
+            });
+
+            // Через 6.2 секунды (после завершения анимации) финально выравниваем на пиксель
+            setTimeout(() => {
+                // Убираем transition и ставим точное позиционирование
+                strip.style.transition = 'none';
+                const itemWidth = 91;
+                const winIndex = 30;
+                // Центрируем: (winIndex * itemWidth) - (ширина окна / 2) + (itemWidth / 2)
+                const slotWindowWidth = document.getElementById('slotWindow').clientWidth;
+                const targetScroll = (winIndex * itemWidth) - (slotWindowWidth / 2) + (itemWidth / 2);
+                strip.style.transform = `translateX(-${targetScroll}px)`;
+
+                // Показываем результат
+                resultSkin.innerHTML = `✨ Выпало: <b>${winItem.name}</b>`;
+                resultContainer.classList.add('show');
+
+                // Назначаем обработчик кнопки "Вывести"
+                withdrawBtn.onclick = () => {
+                    const tradeLink = tradeUrlInput.value.trim();
+                    if (!tradeLink) {
+                        alert('Введите трейд-ссылку!');
+                        return;
+                    }
+                    const payload = { skin: winItem.name, trade_link: tradeLink };
+                    console.log('Отправка данных:', payload);
+                    tg.sendData(JSON.stringify(payload));
+                    alert('✅ Заявка на вывод отправлена!');
+                    overlay.style.display = 'none';
+                    resultContainer.classList.remove('show');
+                };
+            }, 6200);
+        }
+
+        // Закрытие по клику на оверлей
+        overlay.onclick = (e) => {
+            if (e.target === overlay) {
+                overlay.style.display = 'none';
+                resultContainer.classList.remove('show');
+            }
+        };
+    </script>
 </body>
 </html>
