@@ -5,143 +5,191 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Faceit Cases</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; } /* плавная прокрутка */
+
         body {
-            font-family: 'Arial', sans-serif;
-            background: #1a1a2e;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f0f1a;
             color: white;
-            text-align: center;
             padding: 20px;
-            box-sizing: border-box;
+            min-height: 100vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
-        h2 { margin-top: 0; }
+
+        /* кастомный скроллбар для красоты */
+        body::-webkit-scrollbar { width: 6px; }
+        body::-webkit-scrollbar-track { background: #1a1a2e; }
+        body::-webkit-scrollbar-thumb { background: #4a4a6a; border-radius: 3px; }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-top: 10px;
+        }
+        .header h2 { font-size: 24px; margin-bottom: 10px; }
+        .balance {
+            background: #1e1e32;
+            border-radius: 12px;
+            padding: 12px 20px;
+            display: inline-block;
+            font-size: 16px;
+            color: #ffdd57;
+        }
+        .balance span { font-weight: bold; font-size: 20px; }
+
+        .section-title {
+            font-size: 18px;
+            margin: 25px 0 15px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
         .cases {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 15px;
-            margin: 20px 0;
+            margin-bottom: 40px;
         }
+
         .case {
-            background: #16213e;
+            background: #1a1a2e;
             border-radius: 20px;
-            padding: 25px 15px;
-            width: 120px;
+            padding: 20px 15px;
+            text-align: center;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
         }
-        .case:active { transform: scale(0.95); background: #0f3460; }
-        .case .icon { font-size: 40px; display: block; margin-bottom: 10px; }
-        .case .name { font-weight: bold; margin: 5px 0; }
+        .case:hover { transform: translateY(-3px); border-color: #3a3a5e; }
+        .case:active { transform: scale(0.96); }
+
+        .case .icon { font-size: 42px; display: block; margin-bottom: 10px; }
+        .case .name { font-weight: bold; margin-bottom: 6px; font-size: 16px; }
         .case .cost { color: gold; font-size: 14px; }
+        .case .locked { 
+            position: absolute; 
+            top: 10px; right: 10px; 
+            font-size: 14px; 
+            opacity: 0.7;
+        }
+        .case.referral { border: 2px dashed #ffdd57; }
+
         #result {
-            margin-top: 30px;
-            font-size: 22px;
-            min-height: 60px;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: #1e1e32;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            font-size: 18px;
+            z-index: 10;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+            transform: translateY(100px);
+            opacity: 0;
         }
-        .prize-animation {
-            animation: showPrize 0.5s ease-out;
-        }
-        @keyframes showPrize {
-            from { transform: scale(0); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+        #result.show {
+            transform: translateY(0);
+            opacity: 1;
         }
     </style>
 </head>
 <body>
-    <h2>🎁 Открыть кейс Faceit LFG</h2>
-    <div class="cases" id="casesContainer"></div>
+    <div class="header">
+        <h2>🎁 Кейсы Faceit LFG</h2>
+        <div class="balance">
+            🔑 Ключей: <span id="keysCount">0</span>
+        </div>
+    </div>
+
+    <div class="section-title">⭐ Стандартные</div>
+    <div class="cases" id="standardCases"></div>
+
+    <div class="section-title">👥 Реферальные</div>
+    <div class="cases" id="referralCases"></div>
+
     <div id="result"></div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-        // ======== ЗДЕСЬ ГЛАВНАЯ МАГИЯ MINI APP ========
         const tg = window.Telegram.WebApp;
-
-        // 1. Разворачиваем на весь экран (как Hamster Kombat!)
         tg.ready();
         tg.expand();
 
-        // 2. Пытаемся запросить полноэкранный режим (если поддерживается)
-        if (tg.requestFullscreen) {
-            tg.requestFullscreen();
+        // Пытаемся получить данные пользователя (рефералов, никнейм и т.д.)
+        // В будущем бот может передавать balance через initData
+        let userKeys = 0; // заглушка, позже будем получать из бота
+        const urlParams = new URLSearchParams(tg.initData);
+        // Если бот передал ключи через initDataUnsafe (при тестировании)
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            // Пока заглушка, позже можно заменить на реальное получение из бота
+            // userKeys = tg.initDataUnsafe.user.keys || 0;
         }
+        document.getElementById('keysCount').innerText = userKeys;
 
-        // 3. Меняем цвет хедера и фона под тему Telegram (светлая/темная)
-        tg.setHeaderColor('#1a1a2e');
-        tg.setBackgroundColor('#1a1a2e');
-
-        // 4. Показываем кнопку "Назад" в хедере (как в приложении!)
-        tg.BackButton.show();
-        tg.BackButton.onClick(() => {
-            tg.close(); // Закрываем мини-приложение
-        });
-        // ======== КОНЕЦ МАГИИ ========
-
-        const cases = [
-            {
-                name: "Обычный",
-                cost: "Бесплатно",
-                icon: "📦",
-                items: [
-                    "🎭 Роль 'Новичок'",
-                    "💬 Доступ в чат",
-                    "📛 Смена ника",
-                    "😺 Ничего"
-                ]
-            },
-            {
-                name: "Редкий",
-                cost: "50 монет",
-                icon: "🎁",
-                items: [
-                    "🌟 Роль 'VIP'",
-                    "🎫 Закрытый чат",
-                    "📛 Смена цвета ника",
-                    "😺 Ничего"
-                ]
-            },
-            {
-                name: "Легендарный",
-                cost: "200 монет",
-                icon: "💎",
-                items: [
-                    "👑 Роль 'Легенда'",
-                    "🚀 Продвижение анкеты",
-                    "🔓 Разбан",
-                    "😺 Ничего"
-                ]
-            }
+        const standardCases = [
+            { name: "Новичок", cost: 0, icon: "📦", items: ["🎭 Роль 'Новичок'", "💬 Доступ в чат", "😺 Ничего"], referral: false },
+            { name: "Обычный", cost: 1, icon: "🎒", items: ["📛 Смена ника", "💎 +50 монет", "😺 Ничего"], referral: false }
         ];
 
-        const container = document.getElementById('casesContainer');
-        cases.forEach((c, index) => {
-            const div = document.createElement('div');
-            div.className = 'case';
-            div.innerHTML =
-                `<span class="icon">${c.icon}</span>` +
-                `<div class="name">${c.name}</div>` +
-                `<div class="cost">${c.cost}</div>`;
-            div.onclick = () => openCase(index);
-            container.appendChild(div);
-        });
+        const referralCases = [
+            { name: "Реферал ВИП", cost: 3, icon: "🌟", items: ["🌟 Роль 'VIP'", "🎫 Доступ в закрытый чат", "🚀 Продвижение", "😺 Ничего"], referral: true },
+            { name: "Легендарный", cost: 5, icon: "💎", items: ["👑 Роль 'Легенда'", "🔓 Разбан", "✨ Уникальное звание", "😺 Ничего"], referral: true }
+        ];
 
-        function openCase(index) {
-            const c = cases[index];
-            const prize = c.items[Math.floor(Math.random() * c.items.length)];
-
-            // Красивая анимация результата
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = `✨ Открываем <b>${c.name}</b>...`;
-            resultDiv.classList.add('prize-animation');
-
-            setTimeout(() => {
-                resultDiv.innerHTML =
-                    `✨ Вы открыли <b>${c.name}</b> кейс!<br>Выпало: <b>${prize}</b>`;
-            }, 500);
-
-            // Отправляем результат в бота
-            tg.sendData(JSON.stringify({ case: c.name, prize: prize }));
+        function renderCases(containerId, cases) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            cases.forEach(c => {
+                const div = document.createElement('div');
+                div.className = `case ${c.referral ? 'referral' : ''}`;
+                const locked = userKeys < c.cost && c.cost > 0 ? '🔒' : '';
+                div.innerHTML = `
+                    <span class="icon">${c.icon}</span>
+                    <div class="name">${c.name}</div>
+                    <div class="cost">${c.cost === 0 ? 'Бесплатно' : c.cost + ' ключ'}</div>
+                    ${locked ? `<span class="locked">${locked}</span>` : ''}
+                `;
+                div.onclick = () => {
+                    if (userKeys < c.cost) {
+                        showResult('❌ Недостаточно ключей. Пригласите друзей!', false);
+                        return;
+                    }
+                    openCase(c);
+                };
+                container.appendChild(div);
+            });
         }
+
+        function openCase(caseData) {
+            const prizes = caseData.items;
+            const prize = prizes[Math.floor(Math.random() * prizes.length)];
+            userKeys -= caseData.cost;
+            document.getElementById('keysCount').innerText = userKeys;
+            renderCases('standardCases', standardCases);
+            renderCases('referralCases', referralCases);
+            showResult(`✨ Вы открыли "${caseData.name}"!<br>Выпало: <b>${prize}</b>`, true);
+            tg.sendData(JSON.stringify({ case: caseData.name, prize: prize }));
+        }
+
+        function showResult(text, success) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = text;
+            resultDiv.classList.add('show');
+            resultDiv.style.background = success ? '#1e1e32' : '#3a2020';
+            setTimeout(() => resultDiv.classList.remove('show'), 3000);
+        }
+
+        // Инициализация
+        renderCases('standardCases', standardCases);
+        renderCases('referralCases', referralCases);
     </script>
 </body>
 </html>
