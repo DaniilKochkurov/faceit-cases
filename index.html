@@ -3,13 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>🎁 Кейс за 3 реферала</title>
+  <title>Кейсы • Мини-Апп</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
       background: #1a1d23;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-family: 'Segoe UI', system-ui, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -17,340 +16,414 @@
       padding: 16px;
       color: #fff;
     }
-
-    .case-container {
-      background: linear-gradient(145deg, #21252e, #191c23);
-      border: 2px solid #c9a24d;
-      border-radius: 24px;
-      padding: 24px 20px 32px;
+    .app {
       width: 100%;
-      max-width: 420px;
-      text-align: center;
-      box-shadow: 0 0 40px rgba(201, 162, 77, 0.15);
+      max-width: 400px;
     }
-
-    .case-title {
-      font-size: 22px;
+    /* Экран выбора кейса */
+    .cases-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .case-card {
+      background: linear-gradient(145deg, #1e222a, #171a21);
+      border: 2px solid #c9a24d;
+      border-radius: 20px;
+      padding: 20px 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+    }
+    .case-card:active { transform: scale(0.97); }
+    .case-icon {
+      width: 64px; height: 64px;
+      background: radial-gradient(circle at 30% 30%, #f6c358, #8b691b);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      box-shadow: 0 0 20px rgba(246,195,88,0.5);
+      flex-shrink: 0;
+    }
+    .case-info h3 {
+      font-size: 18px;
       font-weight: 700;
-      margin-bottom: 6px;
-      background: linear-gradient(180deg, #f6c358 0%, #e0911a 100%);
+      background: linear-gradient(180deg, #f6c358, #e0911a);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-
-    .case-subtitle {
-      font-size: 13px;
-      color: #8892a4;
-      margin-bottom: 24px;
+    .case-info .price-tag {
+      font-size: 14px;
+      color: #a0aab4;
+      margin-top: 4px;
     }
-
-    .roulette-window {
+    .case-info .price-tag span {
+      color: #f6c358;
+      font-weight: 700;
+    }
+    /* Экран открытия */
+    .open-screen {
+      display: none;
+      flex-direction: column;
+    }
+    .back-btn {
+      background: none;
+      border: 1px solid #2a2d35;
+      color: #8892a4;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-bottom: 16px;
+      align-self: flex-start;
+    }
+    .case-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .case-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      background: linear-gradient(180deg, #f6c358, #e0911a);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .case-header .price {
+      font-size: 14px;
+      color: #a0aab4;
+    }
+    /* Лента */
+    .roulette-strip-wrapper {
       background: #0e0f14;
       border-radius: 16px;
-      padding: 20px 0 16px;
-      margin-bottom: 28px;
+      padding: 16px 0;
+      margin-bottom: 20px;
       border: 1px solid #2a2d35;
       overflow: hidden;
       position: relative;
     }
-
-    .skin-card {
-      width: 180px;
-      height: 130px;
-      margin: 0 auto;
-      border-radius: 12px;
+    .strip-viewport {
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+    }
+    .strip-track {
       display: flex;
+      transition: transform 0.1s cubic-bezier(0.25, 0.1, 0.25, 1);
+      will-change: transform;
+    }
+    .skin-item {
+      flex: 0 0 130px;
+      height: 110px;
+      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      transition: background 0.3s;
+      margin: 0 8px;
+      border-radius: 12px;
+      position: relative;
     }
-
-    .skin-card img {
-      max-width: 85%;
-      max-height: 85%;
+    .skin-item img {
+      max-width: 80%;
+      max-height: 70%;
       object-fit: contain;
-      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
-      transition: opacity 0.2s;
+      filter: drop-shadow(0 4px 10px black);
     }
-
-    /* Фоны по редкости */
-    .bg-cheap       { background: transparent; }
-    .bg-expensive   { background: radial-gradient(circle, #e74c3c55 0%, #e74c3c22 70%, transparent 100%); }
-    .bg-impossible  { background: radial-gradient(circle, #f1c40f55 0%, #f1c40f22 70%, transparent 100%); }
-
-    .skin-name {
-      font-size: 14px;
-      font-weight: 600;
-      margin: 12px 0 4px;
-      color: #e0e0e0;
+    .skin-item .name {
+      font-size: 11px;
+      margin-top: 6px;
+      text-align: center;
+      color: #ddd;
     }
-
-    .skin-price {
-      font-size: 12px;
-      font-weight: 500;
-      padding: 4px 12px;
-      border-radius: 20px;
-      display: inline-block;
+    .bg-cheap { background: transparent; }
+    .bg-expensive { background: radial-gradient(circle, #e74c3c44 0%, #e74c3c11 70%, transparent 100%); }
+    .bg-impossible { background: radial-gradient(circle, #f1c40f44 0%, #f1c40f11 70%, transparent 100%); }
+    /* Кнопки */
+    .buttons-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
     }
-
-    .price-cheap      { background: #2a2d35; color: #aaa; }
-    .price-expensive  { background: #e74c3c22; color: #e74c3c; }
-    .price-impossible { background: #f1c40f22; color: #f1c40f; }
-
-    .open-btn {
-      background: linear-gradient(180deg, #f6c358 0%, #d4941a 100%);
+    .btn {
+      flex: 1;
       border: none;
-      color: #1a1d23;
       font-weight: 700;
-      font-size: 18px;
-      padding: 14px 32px;
+      font-size: 16px;
+      padding: 14px 0;
       border-radius: 50px;
-      width: 100%;
       cursor: pointer;
       transition: transform 0.1s, box-shadow 0.2s;
-      box-shadow: 0 6px 24px rgba(201, 162, 77, 0.3);
-      letter-spacing: 0.5px;
     }
-
-    .open-btn:active { transform: scale(0.96); }
-    .open-btn:disabled {
-      opacity: 0.5;
-      pointer-events: none;
-      filter: grayscale(30%);
+    .btn:active { transform: scale(0.96); }
+    .btn:disabled { opacity: 0.5; pointer-events: none; }
+    .btn-open {
+      background: linear-gradient(180deg, #f6c358, #d4941a);
+      color: #1a1d23;
+      box-shadow: 0 6px 20px rgba(201,162,77,0.3);
     }
-
-    .status-text {
-      margin-top: 16px;
+    .btn-fast {
+      background: transparent;
+      border: 2px solid #c9a24d;
+      color: #c9a24d;
+    }
+    /* Содержимое кейса */
+    .case-contents {
+      background: #14171e;
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid #2a2d35;
+    }
+    .case-contents h4 {
       font-size: 14px;
       color: #8892a4;
-      min-height: 20px;
+      margin-bottom: 12px;
     }
-
-    /* Анимация тряски для невозможного дропа */
-    @keyframes shake {
-      0%,100% { transform: translateX(0); }
-      25%     { transform: translateX(-6px); }
-      75%     { transform: translateX(6px); }
+    .content-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #1e222a;
     }
-    .shake { animation: shake 0.4s ease-in-out; }
+    .content-row:last-child { border-bottom: none; }
+    .content-skin {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .content-skin img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+    }
+    .content-skin span {
+      font-size: 13px;
+      color: #d0d0d0;
+    }
+    .content-chance {
+      font-size: 12px;
+      color: #8892a4;
+    }
+    .status-msg {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 14px;
+      color: #f6c358;
+    }
   </style>
 </head>
 <body>
-  <div class="case-container">
-    <div class="case-title">🎁 Кейс за 3 реферала</div>
-    <div class="case-subtitle">Пригласи 3 друзей и открой кейс</div>
-
-    <div class="roulette-window">
-      <div class="skin-card" id="skinCard">
-        <img id="skinImage" src="" alt="Скин">
+<div class="app">
+  <!-- ЭКРАН ВЫБОРА КЕЙСА -->
+  <div id="casesScreen">
+    <div class="case-card" data-case="1">
+      <div class="case-icon">🎁</div>
+      <div class="case-info">
+        <h3>Grand Slam</h3>
+        <div class="price-tag">Стоимость: <span>3 реферала</span></div>
       </div>
-      <div class="skin-name" id="skinName">—</div>
-      <div class="skin-price" id="skinPrice">—</div>
     </div>
-
-    <button class="open-btn" id="openButton">🔓 Открыть кейс</button>
-    <div class="status-text" id="statusText">Нажми на кнопку, чтобы испытать удачу</div>
+    <!-- В будущем сюда можно добавить ещё кейсы -->
   </div>
 
-  <script>
-    // ========================
-    //  КОНФИГУРАЦИЯ СКИНОВ
-    // ========================
-    const skins = [
-      // --- Дорогие (шанс 3%, красный фон) ---
-      {
-        name: 'M4A4 | Choppa (FT)',
-        price: '~9.5 ₽',
-        img: 'https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Choppa%20(Field-Tested).webp',
-        rarity: 'expensive',
-        chance: 3
-      },
-      {
-        name: 'AK-47 | Olive Polycam (WW)',
-        price: '~8.7 ₽',
-        img: 'https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20Olive%20Polycam%20(Field-Tested).webp',
-        rarity: 'expensive',
-        chance: 3
-      },
-      {
-        name: 'R8 Revolver | Grip (FT)',
-        price: '~7.2 ₽',
-        img: 'https://cdn2.csgo.com/item/image/width=916/R8%20Revolver%20%7C%20Grip%20(Field-Tested).webp',
-        rarity: 'expensive',
-        chance: 3
-      },
+  <!-- ЭКРАН ОТКРЫТИЯ КЕЙСА -->
+  <div id="openScreen" class="open-screen">
+    <button class="back-btn" id="backBtn">← Назад</button>
+    <div class="case-header">
+      <h2>Grand Slam</h2>
+      <div class="price">Открытие за 3 реферала</div>
+    </div>
 
-      // --- Дешёвые (шанс 18%, без фона) ---
-      {
-        name: 'M4A4 | Steel Work (FT)',
-        price: '~0.8 ₽',
-        img: 'https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Steel%20Work%20(Field-Tested).webp',
-        rarity: 'cheap',
-        chance: 18
-      },
-      {
-        name: 'SSG 08 | Calligrafaux (WW)',
-        price: '~1.1 ₽',
-        img: 'https://cdn2.csgo.com/item/image/width=916/SSG%2008%20%7C%20Calligrafaux%20(Well-Worn).webp',
-        rarity: 'cheap',
-        chance: 18
-      },
-      {
-        name: 'Glock-18 | Ocean Topo (FT)',
-        price: '~0.6 ₽',
-        img: 'https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Ocean%20Topo%20(Field-Tested).webp',
-        rarity: 'cheap',
-        chance: 18
-      },
-      {
-        name: 'AK-47 | VariCamo Grey (FT)',
-        price: '~1.5 ₽',
-        img: 'https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20VariCamo%20Grey%20(Field-Tested).webp',
-        rarity: 'cheap',
-        chance: 18
-      },
-      {
-        name: 'M4A1-S | Wash me plz (FT)',
-        price: '~0.9 ₽',
-        img: 'https://cdn2.csgo.com/item/image/width=916/M4A1-S%20%7C%20Wash%20me%20plz%20(Field-Tested).webp',
-        rarity: 'cheap',
-        chance: 18
-      },
+    <div class="roulette-strip-wrapper">
+      <div class="strip-viewport" id="viewport">
+        <div class="strip-track" id="stripTrack"></div>
+      </div>
+    </div>
 
-      // --- Невозможный (шанс 0%, жёлтый фон) ---
-      {
-        name: 'Glock-18 | Moonrise (FT)',
-        price: '∞',
-        img: 'https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Moonrise%20(Field-Tested).webp',
-        rarity: 'impossible',
-        chance: 0
-      }
-    ];
+    <div class="buttons-row">
+      <button class="btn btn-open" id="btnOpen">🔓 Открыть</button>
+      <button class="btn btn-fast" id="btnFast">⚡ Быстро</button>
+    </div>
 
-    // Проверка сумм шансов (должна быть 99, можно докинуть 1% на невозможный)
-    const totalChance = skins.reduce((sum, s) => sum + s.chance, 0);
-    console.assert(totalChance <= 100, 'Сумма шансов больше 100%!');
+    <div class="case-contents" id="caseContents"></div>
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
+</div>
 
-    // Построение массива для быстрого выбора по шансам
-    const chancePool = [];
+<script>
+  // ========== КОНФИГУРАЦИЯ КЕЙСА ==========
+  const CASE_PRICE = 3; // реферала
+  const skins = [
+    // Дорогие (красный фон, шанс 3%)
+    { name: 'M4A4 | Choppa (FT)', price: '~9.5 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Choppa%20(Field-Tested).webp', rarity: 'expensive', chance: 3 },
+    { name: 'AK-47 | Olive Polycam (WW)', price: '~8.7 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20Olive%20Polycam%20(Field-Tested).webp', rarity: 'expensive', chance: 3 },
+    { name: 'R8 Revolver | Grip (FT)', price: '~7.2 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/R8%20Revolver%20%7C%20Grip%20(Field-Tested).webp', rarity: 'expensive', chance: 3 },
+    // Дешёвые (без фона, шанс 18%)
+    { name: 'M4A4 | Steel Work (FT)', price: '~0.8 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Steel%20Work%20(Field-Tested).webp', rarity: 'cheap', chance: 18 },
+    { name: 'SSG 08 | Calligrafaux (WW)', price: '~1.1 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/SSG%2008%20%7C%20Calligrafaux%20(Well-Worn).webp', rarity: 'cheap', chance: 18 },
+    { name: 'Glock-18 | Ocean Topo (FT)', price: '~0.6 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Ocean%20Topo%20(Field-Tested).webp', rarity: 'cheap', chance: 18 },
+    { name: 'AK-47 | VariCamo Grey (FT)', price: '~1.5 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20VariCamo%20Grey%20(Field-Tested).webp', rarity: 'cheap', chance: 18 },
+    { name: 'M4A1-S | Wash me plz (FT)', price: '~0.9 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/M4A1-S%20%7C%20Wash%20me%20plz%20(Field-Tested).webp', rarity: 'cheap', chance: 18 },
+    // Невозможный (жёлтый фон, шанс 0%)
+    { name: 'Glock-18 | Moonrise (FT)', price: '~98 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Moonrise%20(Field-Tested).webp', rarity: 'impossible', chance: 0 }
+  ];
+
+  // Построение пула выбора
+  const pool = [];
+  skins.forEach(s => { for (let i=0; i<s.chance; i++) pool.push(s); });
+  while (pool.length < 100) pool.push(skins.find(s=>s.rarity==='cheap'));
+
+  // ========== DOM ЭЛЕМЕНТЫ ==========
+  const casesScreen = document.getElementById('casesScreen');
+  const openScreen  = document.getElementById('openScreen');
+  const backBtn     = document.getElementById('backBtn');
+  const stripTrack  = document.getElementById('stripTrack');
+  const btnOpen     = document.getElementById('btnOpen');
+  const btnFast     = document.getElementById('btnFast');
+  const caseContents= document.getElementById('caseContents');
+  const statusMsg   = document.getElementById('statusMsg');
+
+  let isRolling = false;
+  let currentCase = null;
+
+  // ========== ПОСТРОЕНИЕ ЛЕНТЫ И СОДЕРЖИМОГО ==========
+  function buildStripAndContents() {
+    // Лента: повторяем скины несколько раз для красоты
+    stripTrack.innerHTML = '';
+    const repeatTimes = 6; // длина ленты
+    for (let r=0; r<repeatTimes; r++) {
+      skins.forEach(skin => {
+        const div = document.createElement('div');
+        div.className = `skin-item bg-${skin.rarity}`;
+        div.innerHTML = `<img src="${skin.img}" alt="${skin.name}"><div class="name">${skin.name.split(' (')[0]}</div>`;
+        stripTrack.appendChild(div);
+      });
+    }
+
+    // Содержимое кейса
+    caseContents.innerHTML = '<h4>📦 Содержимое кейса</h4>';
     skins.forEach(skin => {
-      for (let i = 0; i < skin.chance; i++) chancePool.push(skin);
+      const row = document.createElement('div');
+      row.className = 'content-row';
+      row.innerHTML = `
+        <div class="content-skin">
+          <img src="${skin.img}" alt="${skin.name}">
+          <span>${skin.name}</span>
+        </div>
+        <div class="content-chance">${skin.chance}%</div>
+      `;
+      caseContents.appendChild(row);
     });
-    // Если нужно добить до 100 — заполним последним дешёвым скином
-    while (chancePool.length < 100) {
-      chancePool.push(skins.find(s => s.rarity === 'cheap'));
+  }
+
+  // ========== ПЕРЕХОД НА ЭКРАН ОТКРЫТИЯ ==========
+  function openCase(caseData) {
+    currentCase = caseData;
+    buildStripAndContents();
+    casesScreen.style.display = 'none';
+    openScreen.style.display = 'flex';
+    stripTrack.style.transition = 'none';
+    stripTrack.style.transform = 'translateX(0)';
+    statusMsg.textContent = '';
+  }
+
+  function goBack() {
+    openScreen.style.display = 'none';
+    casesScreen.style.display = 'flex';
+  }
+
+  // ========== МЕХАНИКА ПРОКРУТКИ ==========
+  function getRandomSkin() {
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function roll(finalSkin, speedMode = 'normal') {
+    const itemWidth = 138; // 130px + 8px margin
+    const totalItems = stripTrack.children.length;
+    // Индекс финального скина в ленте (находим первый попавшийся с таким же объектом)
+    let finalIndex = -1;
+    for (let i=0; i<totalItems; i++) {
+      const itemSkinName = stripTrack.children[i].querySelector('.name').textContent;
+      if (itemSkinName === finalSkin.name.split(' (')[0]) {
+        finalIndex = i;
+        break;
+      }
     }
+    if (finalIndex === -1) finalIndex = 0;
 
-    // ========================
-    //  DOM-ЭЛЕМЕНТЫ
-    // ========================
-    const skinCard   = document.getElementById('skinCard');
-    const skinImage  = document.getElementById('skinImage');
-    const skinName   = document.getElementById('skinName');
-    const skinPrice  = document.getElementById('skinPrice');
-    const openButton = document.getElementById('openButton');
-    const statusText = document.getElementById('statusText');
+    // Центрируем выбранный элемент
+    const viewportWidth = document.getElementById('viewport').clientWidth;
+    const offset = (viewportWidth / 2) - (itemWidth / 2) - (finalIndex * itemWidth);
 
-    let isRolling = false;
+    // Длительность прокрутки
+    let duration = speedMode === 'fast' ? 600 : 2800;
+    const startTrans = -finalIndex * itemWidth + viewportWidth/2 - itemWidth/2; // конечное положение
+    // Для плавности делаем анимацию через JS (без transition на время)
+    const startTime = performance.now();
+    const initialTransform = 0; // стартуем с 0 (можно оставить текущий)
 
-    // ========================
-    //  ФУНКЦИЯ ВЫБОРА СЛУЧАЙНОГО СКИНА
-    // ========================
-    function getRandomSkin() {
-      const rand = Math.floor(Math.random() * chancePool.length);
-      return chancePool[rand];
-    }
+    function animate(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // easeOutCubic
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const currentOffset = initialTransform + (startTrans - initialTransform) * ease;
+      stripTrack.style.transform = `translateX(${currentOffset}px)`;
 
-    // ========================
-    //  ОБНОВЛЕНИЕ КАРТОЧКИ
-    // ========================
-    function updateCard(skin) {
-      skinCard.className = 'skin-card';
-      skinCard.classList.add(`bg-${skin.rarity}`);
-
-      skinImage.src = skin.img;
-      skinImage.alt = skin.name;
-
-      skinName.textContent = skin.name;
-
-      skinPrice.textContent = skin.price;
-      skinPrice.className = 'skin-price';
-      skinPrice.classList.add(`price-${skin.rarity}`);
-    }
-
-    // ========================
-    //  АНИМАЦИЯ ПРОКРУТКИ
-    // ========================
-    function startRoll(finalSkin) {
-      const allSkins = [...skins];
-      let currentIndex = 0;
-      let tickCount = 0;
-      const totalTicks = 35 + Math.floor(Math.random() * 15); // 35-50 смен
-      let interval = 40; // начальная скорость (мс)
-
-      const tick = () => {
-        // Показываем случайный скин (не финальный)
-        let skinToShow;
-        if (tickCount < totalTicks - 3) {
-          // Случайный, но не финальный
-          const others = allSkins.filter(s => s !== finalSkin);
-          skinToShow = others[Math.floor(Math.random() * others.length)];
-        } else {
-          // Последние 3 тика — финальный скин
-          skinToShow = finalSkin;
-        }
-
-        updateCard(skinToShow);
-        tickCount++;
-
-        if (tickCount < totalTicks) {
-          // Замедление в конце
-          if (tickCount > totalTicks * 0.6) {
-            interval += 12;
-          }
-          setTimeout(tick, interval);
-        } else {
-          // Финиш
-          finishRoll(finalSkin);
-        }
-      };
-
-      tick();
-    }
-
-    function finishRoll(skin) {
-      isRolling = false;
-      openButton.disabled = false;
-
-      if (skin.rarity === 'impossible') {
-        statusText.innerHTML = '🎉 НЕВЕРОЯТНО! Выпал <b>Glock-18 | Moonrise</b>! (шанс 0%)';
-        skinCard.classList.add('shake');
-        setTimeout(() => skinCard.classList.remove('shake'), 500);
+      if (progress < 1) {
+        requestAnimationFrame(animate);
       } else {
-        statusText.innerHTML = `🎉 Выпал: <b>${skin.name}</b> (${skin.price})`;
+        finishRoll(finalSkin);
       }
     }
 
-    // ========================
-    //  ОБРАБОТЧИК КНОПКИ
-    // ========================
-    openButton.addEventListener('click', () => {
-      if (isRolling) return;
-      isRolling = true;
-      openButton.disabled = true;
-      statusText.textContent = 'Крутим...';
+    requestAnimationFrame(animate);
+  }
 
-      const finalSkin = getRandomSkin();
-      startRoll(finalSkin);
+  function finishRoll(skin) {
+    isRolling = false;
+    btnOpen.disabled = false;
+    btnFast.disabled = false;
+    if (skin.rarity === 'impossible') {
+      statusMsg.innerHTML = `🔥 НЕВЕРОЯТНО! Выпал ${skin.name} (${skin.price})`;
+    } else {
+      statusMsg.innerHTML = `🎉 Выпал: ${skin.name} (${skin.price})`;
+    }
+  }
+
+  function startOpen(speed = 'normal') {
+    if (isRolling) return;
+    isRolling = true;
+    btnOpen.disabled = true;
+    btnFast.disabled = true;
+    statusMsg.textContent = speed === 'fast' ? 'Быстрое открытие...' : 'Крутим...';
+    const final = getRandomSkin();
+    roll(final, speed);
+  }
+
+  // ========== ОБРАБОТЧИКИ ==========
+  document.querySelectorAll('.case-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const caseId = card.dataset.case;
+      openCase({ id: caseId, name: 'Grand Slam', price: CASE_PRICE });
     });
+  });
 
-    // ========================
-    //  ИНИЦИАЛИЗАЦИЯ
-    // ========================
-    // Показываем первый дешёвый скин по умолчанию
-    const defaultSkin = skins.find(s => s.rarity === 'cheap');
-    updateCard(defaultSkin);
-  </script>
+  backBtn.addEventListener('click', goBack);
+  btnOpen.addEventListener('click', () => startOpen('normal'));
+  btnFast.addEventListener('click', () => startOpen('fast'));
+
+  // Инициализация стартового экрана
+  casesScreen.style.display = 'flex';
+  openScreen.style.display = 'none';
+</script>
 </body>
 </html>
