@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кейсы Faceit LFG</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1e1e2f;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .cases {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .case {
+            background: #2a2a40;
+            border-radius: 15px;
+            padding: 20px;
+            width: 130px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .case:hover { transform: scale(1.05); }
+        .case img { width: 60px; height: 60px; }
+        .case .name { font-weight: bold; margin-top: 8px; }
+        .case .cost { color: gold; font-size: 14px; }
+        #result {
+            margin-top: 30px;
+            font-size: 20px;
+            min-height: 60px;
+        }
+    </style>
+</head>
+<body>
+    <h2>🎁 Открыть кейсы</h2>
+    <div class="cases" id="casesContainer"></div>
+    <div id="result"></div>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Виртуальные кейсы (можно менять)
+        const cases = [
+            { name: "Обычный", cost: "Бесплатно", img: "📦", items: ["🎭 Роль 'Новичок'", "💬 +1 сообщение", "😺 Ничего"] },
+            { name: "Редкий", cost: "50 монет", img: "🎁", items: ["🌟 Роль 'VIP'", "🎫 Доступ в закрытый чат", "📛 Смена цвета ника", "😺 Ничего"] },
+            { name: "Легендарный", cost: "200 монет", img: "💎", items: ["👑 Роль 'Легенда'", "🚀 Продвижение анкеты", "🔓 Разбан", "😺 Ничего"] }
+        ];
+
+        const container = document.getElementById('casesContainer');
+        cases.forEach((c, index) => {
+            const div = document.createElement('div');
+            div.className = 'case';
+            div.innerHTML = `<div>${c.img}</div><div class="name">${c.name}</div><div class="cost">${c.cost}</div>`;
+            div.onclick = () => openCase(index);
+            container.appendChild(div);
+        });
+
+        function openCase(index) {
+            const c = cases[index];
+            const prize = c.items[Math.floor(Math.random() * c.items.length)];
+            document.getElementById('result').innerHTML =
+                `✨ Вы открыли <b>${c.name}</b> кейс!<br>Выпало: <b>${prize}</b>`;
+            // Отправляем результат в чат бота (опционально)
+            tg.sendData(JSON.stringify({ case: c.name, prize }));
+        }
+    </script>
+</body>
+</html>
