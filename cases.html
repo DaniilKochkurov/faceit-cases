@@ -2,16 +2,18 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Кейсы Faceit LFG</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Faceit Cases</title>
     <style>
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #1e1e2f;
+            font-family: 'Arial', sans-serif;
+            background: #1a1a2e;
             color: white;
             text-align: center;
             padding: 20px;
+            box-sizing: border-box;
         }
+        h2 { margin-top: 0; }
         .cases {
             display: flex;
             flex-wrap: wrap;
@@ -20,46 +22,105 @@
             margin: 20px 0;
         }
         .case {
-            background: #2a2a40;
-            border-radius: 15px;
-            padding: 20px;
-            width: 130px;
+            background: #16213e;
+            border-radius: 20px;
+            padding: 25px 15px;
+            width: 120px;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: 0.2s;
         }
-        .case:hover { transform: scale(1.05); }
-        .case img { width: 60px; height: 60px; }
-        .case .name { font-weight: bold; margin-top: 8px; }
+        .case:active { transform: scale(0.95); background: #0f3460; }
+        .case .icon { font-size: 40px; display: block; margin-bottom: 10px; }
+        .case .name { font-weight: bold; margin: 5px 0; }
         .case .cost { color: gold; font-size: 14px; }
         #result {
             margin-top: 30px;
-            font-size: 20px;
+            font-size: 22px;
             min-height: 60px;
+        }
+        .prize-animation {
+            animation: showPrize 0.5s ease-out;
+        }
+        @keyframes showPrize {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
     </style>
 </head>
 <body>
-    <h2>🎁 Открыть кейсы</h2>
+    <h2>🎁 Открыть кейс Faceit LFG</h2>
     <div class="cases" id="casesContainer"></div>
     <div id="result"></div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
+        // ======== ЗДЕСЬ ГЛАВНАЯ МАГИЯ MINI APP ========
         const tg = window.Telegram.WebApp;
+
+        // 1. Разворачиваем на весь экран (как Hamster Kombat!)
+        tg.ready();
         tg.expand();
 
-        // Виртуальные кейсы (можно менять)
+        // 2. Пытаемся запросить полноэкранный режим (если поддерживается)
+        if (tg.requestFullscreen) {
+            tg.requestFullscreen();
+        }
+
+        // 3. Меняем цвет хедера и фона под тему Telegram (светлая/темная)
+        tg.setHeaderColor('#1a1a2e');
+        tg.setBackgroundColor('#1a1a2e');
+
+        // 4. Показываем кнопку "Назад" в хедере (как в приложении!)
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => {
+            tg.close(); // Закрываем мини-приложение
+        });
+        // ======== КОНЕЦ МАГИИ ========
+
         const cases = [
-            { name: "Обычный", cost: "Бесплатно", img: "📦", items: ["🎭 Роль 'Новичок'", "💬 +1 сообщение", "😺 Ничего"] },
-            { name: "Редкий", cost: "50 монет", img: "🎁", items: ["🌟 Роль 'VIP'", "🎫 Доступ в закрытый чат", "📛 Смена цвета ника", "😺 Ничего"] },
-            { name: "Легендарный", cost: "200 монет", img: "💎", items: ["👑 Роль 'Легенда'", "🚀 Продвижение анкеты", "🔓 Разбан", "😺 Ничего"] }
+            {
+                name: "Обычный",
+                cost: "Бесплатно",
+                icon: "📦",
+                items: [
+                    "🎭 Роль 'Новичок'",
+                    "💬 Доступ в чат",
+                    "📛 Смена ника",
+                    "😺 Ничего"
+                ]
+            },
+            {
+                name: "Редкий",
+                cost: "50 монет",
+                icon: "🎁",
+                items: [
+                    "🌟 Роль 'VIP'",
+                    "🎫 Закрытый чат",
+                    "📛 Смена цвета ника",
+                    "😺 Ничего"
+                ]
+            },
+            {
+                name: "Легендарный",
+                cost: "200 монет",
+                icon: "💎",
+                items: [
+                    "👑 Роль 'Легенда'",
+                    "🚀 Продвижение анкеты",
+                    "🔓 Разбан",
+                    "😺 Ничего"
+                ]
+            }
         ];
 
         const container = document.getElementById('casesContainer');
         cases.forEach((c, index) => {
             const div = document.createElement('div');
             div.className = 'case';
-            div.innerHTML = `<div>${c.img}</div><div class="name">${c.name}</div><div class="cost">${c.cost}</div>`;
+            div.innerHTML =
+                `<span class="icon">${c.icon}</span>` +
+                `<div class="name">${c.name}</div>` +
+                `<div class="cost">${c.cost}</div>`;
             div.onclick = () => openCase(index);
             container.appendChild(div);
         });
@@ -67,10 +128,19 @@
         function openCase(index) {
             const c = cases[index];
             const prize = c.items[Math.floor(Math.random() * c.items.length)];
-            document.getElementById('result').innerHTML =
-                `✨ Вы открыли <b>${c.name}</b> кейс!<br>Выпало: <b>${prize}</b>`;
-            // Отправляем результат в чат бота (опционально)
-            tg.sendData(JSON.stringify({ case: c.name, prize }));
+
+            // Красивая анимация результата
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `✨ Открываем <b>${c.name}</b>...`;
+            resultDiv.classList.add('prize-animation');
+
+            setTimeout(() => {
+                resultDiv.innerHTML =
+                    `✨ Вы открыли <b>${c.name}</b> кейс!<br>Выпало: <b>${prize}</b>`;
+            }, 500);
+
+            // Отправляем результат в бота
+            tg.sendData(JSON.stringify({ case: c.name, prize: prize }));
         }
     </script>
 </body>
