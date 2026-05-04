@@ -228,7 +228,7 @@
   function buildStripAndContents() {
     stripTrack.innerHTML = '';
     // Увеличиваем повтор, чтобы лента была длиннее и прокручивалось много скинов
-    const repeatTimes = 8; // было 6, стало 8 – больше элементов, выше скорость визуально
+    const repeatTimes = 20; // было 6, стало 8 – больше элементов, выше скорость визуально
     for (let r = 0; r < repeatTimes; r++) {
       skins.forEach(skin => {
         const div = document.createElement('div');
