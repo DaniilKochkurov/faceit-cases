@@ -181,7 +181,7 @@
     <h2>🎁 Открой кейс Faceit LFG</h2>
     <div class="cases" id="casesContainer"></div>
 
-    <!-- Модальное окно с содержимым кейса -->
+    <!-- Модальное окно с содержимым -->
     <div id="caseModal">
         <div class="modal-content">
             <h3 id="modalTitle"></h3>
@@ -211,7 +211,7 @@
         tg.expand();
         if (tg.requestFullscreen) tg.requestFullscreen();
 
-        // Данные кейса
+        // Кейс
         const cases = [
             {
                 name: "Обычный",
@@ -228,9 +228,10 @@
                     { name: "M4A1-S | Wash me plz (FT)", img: "https://cdn2.csgo.com/item/image/width=916/M4A1-S%20%7C%20Wash%20me%20plz%20(Field-Tested).webp" },
                     { name: "Glock-18 | Moonrise (FT)", img: "https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Moonrise%20(Field-Tested).webp" }
                 ],
+                // Индексы дешёвых (до 10 руб), дорогих (10-100 руб) и недоступного
                 cheap: [3,4,5,6,7],
                 expensive: [0,1,2],
-                unobtainable: [8]
+                unobtainable: [8]   // Moonrise – только для прокрутки
             }
         ];
 
@@ -250,7 +251,6 @@
         const skinListContainer = document.getElementById('skinListContainer');
         const openCaseBtn = document.getElementById('openCaseBtn');
         const closeModalBtn = document.getElementById('closeModalBtn');
-
         let currentCaseIndex = null;
 
         function showCaseModal(index) {
@@ -290,28 +290,32 @@
             resultContainer.classList.remove('show');
             tradeUrlInput.value = '';
 
-            // Формируем ленту: 40 случайных + выигрышный + ещё 10 для заполнения
+            // Формируем ленту: 30 случайных + выигрышный + 10 дополнительных
             const scrollItems = [];
-            for (let i = 0; i < 40; i++) {
+            for (let i = 0; i < 30; i++) {
                 scrollItems.push(all[Math.floor(Math.random() * all.length)]);
             }
 
-            // Определяем победителя
+            // Определяем реального победителя (с учётом шансов, но БЕЗ недоступного)
             const rand = Math.random() * 100;
             let winItem;
-            if (rand < 5) {
-                winItem = all[c.expensive[Math.floor(Math.random() * c.expensive.length)]];
-            } else {
-                winItem = all[c.cheap[Math.floor(Math.random() * c.cheap.length)]];
+            if (rand < 5) {   // 5% на дорогой
+                const expensiveItems = c.expensive.map(idx => all[idx]);
+                winItem = expensiveItems[Math.floor(Math.random() * expensiveItems.length)];
+            } else {          // 95% на дешёвый
+                const cheapItems = c.cheap.map(idx => all[idx]);
+                winItem = cheapItems[Math.floor(Math.random() * cheapItems.length)];
             }
+
+            // Добавляем победителя в ленту
             scrollItems.push(winItem);
 
-            // Дополнительные скины после выигрышного, чтобы не было пустоты
+            // Ещё 10 случайных после победителя, чтобы не было пустоты
             for (let i = 0; i < 10; i++) {
                 scrollItems.push(all[Math.floor(Math.random() * all.length)]);
             }
 
-            // Рендер
+            // Рендерим ленту
             strip.innerHTML = '';
             scrollItems.forEach(item => {
                 const slotDiv = document.createElement('div');
@@ -323,40 +327,57 @@
                 strip.appendChild(slotDiv);
             });
 
-            // Сброс позиции
+            // Сбрасываем позицию
             strip.style.transition = 'none';
             strip.style.transform = 'translateX(0)';
             overlay.style.display = 'block';
 
+            // Запускаем плавную анимацию
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    const itemWidth = 91;
-                    // Останавливаемся так, чтобы выигрышный элемент был под указателем (он 41-й, индекс 40)
-                    const targetScroll = 40 * itemWidth;   // 41-й элемент (индекс 40) окажется по центру
-                    strip.style.transition = 'transform 7s cubic-bezier(0.15, 0.85, 0.35, 1.0)';
+                    const itemWidth = 91; // ширина ячейки
+                    // Прокручиваем так, чтобы winItem (индекс 30) оказался у левого края окна, но мы хотим по центру.
+                    // В окно помещается width/slotWidth ≈ 3.5 ячейки, поэтому сдвинем на (winIndex - 1.5)
+                    const winIndex = 30; // позиция winItem в scrollItems
+                    const targetScroll = (winIndex - 1.5) * itemWidth;
+                    strip.style.transition = 'transform 6s cubic-bezier(0.15, 0.85, 0.33, 1.0)';
                     strip.style.transform = `translateX(-${targetScroll}px)`;
                 });
             });
 
-            // Показываем результат через 7.5 сек
+            // Через 6.2 секунды (после завершения анимации) финально выравниваем на пиксель
             setTimeout(() => {
+                // Убираем transition и ставим точное позиционирование
+                strip.style.transition = 'none';
+                const itemWidth = 91;
+                const winIndex = 30;
+                // Центрируем: (winIndex * itemWidth) - (ширина окна / 2) + (itemWidth / 2)
+                const slotWindowWidth = document.getElementById('slotWindow').clientWidth;
+                const targetScroll = (winIndex * itemWidth) - (slotWindowWidth / 2) + (itemWidth / 2);
+                strip.style.transform = `translateX(-${targetScroll}px)`;
+
+                // Показываем результат
                 resultSkin.innerHTML = `✨ Выпало: <b>${winItem.name}</b>`;
                 resultContainer.classList.add('show');
 
+                // Назначаем обработчик кнопки "Вывести"
                 withdrawBtn.onclick = () => {
                     const tradeLink = tradeUrlInput.value.trim();
                     if (!tradeLink) {
                         alert('Введите трейд-ссылку!');
                         return;
                     }
-                    tg.sendData(JSON.stringify({ skin: winItem.name, trade_link: tradeLink }));
-                    alert('Запрос на вывод отправлен!');
+                    const payload = { skin: winItem.name, trade_link: tradeLink };
+                    console.log('Отправка данных:', payload);
+                    tg.sendData(JSON.stringify(payload));
+                    alert('✅ Заявка на вывод отправлена!');
                     overlay.style.display = 'none';
                     resultContainer.classList.remove('show');
                 };
-            }, 7500);
+            }, 6200);
         }
 
+        // Закрытие по клику на оверлей
         overlay.onclick = (e) => {
             if (e.target === overlay) {
                 overlay.style.display = 'none';
