@@ -38,6 +38,7 @@
         .case .name { font-weight: bold; margin: 5px 0; }
         .case .cost { color: gold; font-size: 14px; }
 
+        /* Анимация открытия */
         #animationOverlay {
             display: none;
             position: fixed;
@@ -56,9 +57,20 @@
             overflow: hidden;
             position: relative;
         }
+        /* Указатель – стрелочка по центру */
+        #pointer {
+            position: absolute;
+            left: 50%;
+            top: -24px;
+            transform: translateX(-50%);
+            color: gold;
+            font-size: 28px;
+            z-index: 5;
+            filter: drop-shadow(0 0 4px black);
+        }
         #slotStrip {
             display: flex;
-            transition: transform 4s cubic-bezier(0.15, 0.85, 0.35, 1.0);
+            transition: transform 7s cubic-bezier(0.15, 0.85, 0.35, 1.0);
             will-change: transform;
         }
         .slotItem {
@@ -69,6 +81,10 @@
             align-items: center;
             justify-content: center;
             border-right: 1px solid #444;
+            background: #1e1e3f;
+        }
+        .slotItem:nth-child(even) {
+            background: #22224a;
         }
         .slotItem img {
             max-width: 70px;
@@ -77,29 +93,66 @@
             filter: drop-shadow(0 0 3px black);
         }
 
-        #resultText {
-            font-size: 22px;
-            font-weight: bold;
+        #resultContainer {
             margin-top: 30px;
             opacity: 0;
             transform: scale(0.8);
             transition: 0.5s;
         }
-        #resultText.show {
+        #resultContainer.show {
             opacity: 1;
             transform: scale(1);
+        }
+        #resultSkin {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        #tradeUrlInput {
+            width: 80%;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            background: #2c2c44;
+            color: white;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        #tradeUrlInput::placeholder {
+            color: #aaa;
+        }
+        #withdrawBtn {
+            background: gold;
+            color: black;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        #withdrawBtn:active {
+            background: #e6c200;
+            transform: scale(0.95);
         }
     </style>
 </head>
 <body>
-    <h2>🎁 Открыть кейс Faceit LFG</h2>
+    <h2>🎁 Открой кейс Faceit LFG</h2>
     <div class="cases" id="casesContainer"></div>
 
     <div id="animationOverlay">
         <div id="slotWindow">
+            <div id="pointer">▼</div>
             <div id="slotStrip"></div>
         </div>
-        <div id="resultText"></div>
+        <div id="resultContainer">
+            <div id="resultSkin"></div>
+            <input type="text" id="tradeUrlInput" placeholder="Вставьте свою трейд-ссылку">
+            <button id="withdrawBtn">🎁 Вывести</button>
+        </div>
     </div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -142,14 +195,21 @@
 
         const overlay = document.getElementById('animationOverlay');
         const strip = document.getElementById('slotStrip');
-        const resultDiv = document.getElementById('resultText');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultSkin = document.getElementById('resultSkin');
+        const tradeUrlInput = document.getElementById('tradeUrlInput');
+        const withdrawBtn = document.getElementById('withdrawBtn');
 
         function startSlotAnimation(caseIndex) {
             const c = cases[caseIndex];
             const all = c.items;
 
+            // Скрываем результаты и очищаем поле
+            resultContainer.classList.remove('show');
+            tradeUrlInput.value = '';
+
             const scrollItems = [];
-            for (let i = 0; i < 25; i++) {
+            for (let i = 0; i < 30; i++) {
                 scrollItems.push(all[Math.floor(Math.random() * all.length)]);
             }
 
@@ -173,36 +233,51 @@
                 strip.appendChild(slotDiv);
             });
 
+            // Сброс позиции
             strip.style.transition = 'none';
             strip.style.transform = 'translateX(0)';
-            resultDiv.classList.remove('show');
             overlay.style.display = 'block';
 
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    const itemWidth = 91;
+                    const itemWidth = 91; // 90px + 1px border
+                    // Последний элемент должен оказаться точно под указателем (по центру)
                     const totalScroll = (scrollItems.length - 3) * itemWidth;
-                    strip.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.35, 1.0)';
+                    strip.style.transition = 'transform 7s cubic-bezier(0.15, 0.85, 0.35, 1.0)';
                     strip.style.transform = `translateX(-${totalScroll}px)`;
                 });
             });
 
+            // После окончания анимации (7.2 сек) показываем результат
             setTimeout(() => {
-                resultDiv.innerHTML = `✨ Выпало: <b>${winItem.name}</b>`;
-                resultDiv.classList.add('show');
-                tg.sendData(JSON.stringify({ skin: winItem.name }));
+                resultSkin.innerHTML = `✨ Выпало: <b>${winItem.name}</b>`;
+                resultContainer.classList.add('show');
 
-                setTimeout(() => {
+                // Кнопка "Вывести" – отправляем данные в бота
+                withdrawBtn.onclick = () => {
+                    const tradeLink = tradeUrlInput.value.trim();
+                    if (!tradeLink) {
+                        alert('Введите трейд-ссылку!');
+                        return;
+                    }
+                    tg.sendData(JSON.stringify({
+                        skin: winItem.name,
+                        trade_link: tradeLink
+                    }));
+                    alert('Запрос на вывод отправлен!');
                     overlay.style.display = 'none';
-                    resultDiv.classList.remove('show');
-                }, 2500);
-            }, 4100);
+                    resultContainer.classList.remove('show');
+                };
+            }, 7200);
         }
 
-        overlay.onclick = () => {
-            overlay.style.display = 'none';
-            resultDiv.classList.remove('show');
-        };
+        // Закрытие по клику на оверлей (вне кнопок и поля)
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) {
+                overlay.style.display = 'none';
+                resultContainer.classList.remove('show');
+            }
+        });
     </script>
 </body>
 </html>
