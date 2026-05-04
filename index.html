@@ -38,6 +38,41 @@
         .case .name { font-weight: bold; margin: 5px 0; }
         .case .cost { color: gold; font-size: 14px; }
 
+        /* Окно подтверждения */
+        #confirmOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 200;
+            padding: 40px 20px;
+        }
+        #confirmCase {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        #openBtn {
+            background: gold;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        #openBtn:active { background: #e6c200; transform: scale(0.95); }
+        #cancelBtn {
+            background: transparent;
+            border: 2px solid #aaa;
+            color: #aaa;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 16px;
+            margin-left: 15px;
+            cursor: pointer;
+        }
+
         /* Анимация открытия */
         #animationOverlay {
             display: none;
@@ -49,7 +84,7 @@
         }
         #slotWindow {
             width: 90%;
-            height: 100px;
+            height: 140px;
             margin: 60px auto 20px;
             background: #2c2c44;
             border: 3px solid gold;
@@ -57,16 +92,21 @@
             overflow: hidden;
             position: relative;
         }
-        /* Указатель – стрелочка по центру */
+        /* Указатель – крупная золотая стрелка с анимацией */
         #pointer {
             position: absolute;
             left: 50%;
-            top: -24px;
+            top: -30px;
             transform: translateX(-50%);
             color: gold;
-            font-size: 28px;
+            font-size: 42px;
             z-index: 5;
-            filter: drop-shadow(0 0 4px black);
+            filter: drop-shadow(0 0 10px gold);
+            animation: pointerBounce 0.8s infinite alternate;
+        }
+        @keyframes pointerBounce {
+            from { top: -30px; }
+            to { top: -20px; }
         }
         #slotStrip {
             display: flex;
@@ -74,23 +114,23 @@
             will-change: transform;
         }
         .slotItem {
-            min-width: 90px;
-            max-width: 90px;
-            padding: 5px;
+            min-width: 120px;
+            max-width: 120px;
+            padding: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-right: 1px solid #444;
+            border-right: 2px solid gold;
             background: #1e1e3f;
         }
         .slotItem:nth-child(even) {
             background: #22224a;
         }
         .slotItem img {
-            max-width: 70px;
-            max-height: 70px;
-            mix-blend-mode: multiply;
-            filter: drop-shadow(0 0 3px black);
+            max-width: 100px;
+            max-height: 100px;
+            filter: drop-shadow(0 0 5px black);
+            /* Убираем mix-blend-mode – скины будут яркими */
         }
 
         #resultContainer {
@@ -143,6 +183,14 @@
     <h2>🎁 Открой кейс Faceit LFG</h2>
     <div class="cases" id="casesContainer"></div>
 
+    <!-- Окно подтверждения -->
+    <div id="confirmOverlay">
+        <div id="confirmCase"></div>
+        <div style="margin: 20px 0; font-size: 18px;" id="confirmCost"></div>
+        <button id="openBtn">🔓 Открыть</button>
+        <button id="cancelBtn">Отмена</button>
+    </div>
+
     <div id="animationOverlay">
         <div id="slotWindow">
             <div id="pointer">▼</div>
@@ -189,9 +237,32 @@
             const div = document.createElement('div');
             div.className = 'case';
             div.innerHTML = `<span class="icon">${c.icon}</span><div class="name">${c.name}</div><div class="cost">${c.cost}</div>`;
-            div.onclick = () => startSlotAnimation(index);
+            div.onclick = () => showConfirm(index);
             container.appendChild(div);
         });
+
+        const confirmOverlay = document.getElementById('confirmOverlay');
+        const confirmCase = document.getElementById('confirmCase');
+        const confirmCost = document.getElementById('confirmCost');
+        const openBtn = document.getElementById('openBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        let selectedCaseIndex = 0;
+
+        function showConfirm(index) {
+            selectedCaseIndex = index;
+            const c = cases[index];
+            confirmCase.textContent = c.icon;
+            confirmCost.textContent = `${c.name} – стоимость: ${c.cost}`;
+            confirmOverlay.style.display = 'block';
+            openBtn.onclick = () => {
+                confirmOverlay.style.display = 'none';
+                startSlotAnimation(index);
+            };
+        }
+
+        cancelBtn.onclick = () => {
+            confirmOverlay.style.display = 'none';
+        };
 
         const overlay = document.getElementById('animationOverlay');
         const strip = document.getElementById('slotStrip');
@@ -204,7 +275,6 @@
             const c = cases[caseIndex];
             const all = c.items;
 
-            // Скрываем результаты и очищаем поле
             resultContainer.classList.remove('show');
             tradeUrlInput.value = '';
 
@@ -233,27 +303,23 @@
                 strip.appendChild(slotDiv);
             });
 
-            // Сброс позиции
             strip.style.transition = 'none';
             strip.style.transform = 'translateX(0)';
             overlay.style.display = 'block';
 
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    const itemWidth = 91; // 90px + 1px border
-                    // Последний элемент должен оказаться точно под указателем (по центру)
+                    const itemWidth = 122; // 120px + 2px border
                     const totalScroll = (scrollItems.length - 3) * itemWidth;
                     strip.style.transition = 'transform 7s cubic-bezier(0.15, 0.85, 0.35, 1.0)';
                     strip.style.transform = `translateX(-${totalScroll}px)`;
                 });
             });
 
-            // После окончания анимации (7.2 сек) показываем результат
             setTimeout(() => {
                 resultSkin.innerHTML = `✨ Выпало: <b>${winItem.name}</b>`;
                 resultContainer.classList.add('show');
 
-                // Кнопка "Вывести" – отправляем данные в бота
                 withdrawBtn.onclick = () => {
                     const tradeLink = tradeUrlInput.value.trim();
                     if (!tradeLink) {
@@ -271,7 +337,6 @@
             }, 7200);
         }
 
-        // Закрытие по клику на оверлей (вне кнопок и поля)
         overlay.addEventListener('click', function(e) {
             if (e.target === overlay) {
                 overlay.style.display = 'none';
