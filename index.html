@@ -209,6 +209,7 @@
       border-radius: 8px;
       color: #fff;
       margin-bottom: 12px;
+      font-size: 14px;
     }
     .save-btn {
       background: linear-gradient(180deg, #f6c358, #d4941a);
@@ -256,9 +257,7 @@
   </div>
 
   <!-- Вкладка Кейс -->
-  <div id="caseTab" class="tab-content active">
-    <!-- Наполняется JS -->
-  </div>
+  <div id="caseTab" class="tab-content active"></div>
 
   <!-- Вкладка Инвентарь -->
   <div id="inventoryTab" class="tab-content">
@@ -281,7 +280,7 @@
   </div>
 </div>
 
-<!-- Модальное окно -->
+<!-- Модальное окно выпадения -->
 <div class="popup" id="popup">
   <div class="popup-card">
     <img id="popupImg" src="" alt="Скин">
@@ -292,19 +291,19 @@
 </div>
 
 <script>
-  // ========== Telegram Web App ==========
+  // ========== НАСТРОЙКИ ==========
   const tg = window.Telegram.WebApp;
   const user = tg.initDataUnsafe.user;
   const userId = user ? user.id : 0;
 
-  // Количество рефералов из параметра URL
+  // Количество рефералов из URL (?refs=...)
   const urlParams = new URLSearchParams(window.location.search);
   const userRefs = parseInt(urlParams.get('refs')) || 0;
 
-  // Базовый URL API (замените на ваш pythonanywhere)
-  const API_BASE = 'https://ВАШ_ЛОГИН.pythonanywhere.com';
+  // ⚠️ ЗАМЕНИТЕ НА ВАШ ДОМЕН PYTHONANYWHERE
+  const API_BASE = 'https://dankochkurov.pythonanywhere.com';
 
-  // ========== Конфигурация кейсов ==========
+  // ========== КОНФИГУРАЦИЯ КЕЙСОВ ==========
   const cases = {
     poor: {
       name: "Нищий бомж",
@@ -326,7 +325,7 @@
       name: "Обычный бомж",
       image: "https://cs5.pikabu.ru/post_img/big/2014/08/26/10/1409067764_722596962.jpg",
       refs: 5,
-      skins: []  // временно
+      skins: []  // заполните позже
     },
     rich: {
       name: "Богатый бомж",
@@ -336,27 +335,29 @@
     }
   };
 
-  // Определяем текущий кейс
+  // Определяем активный кейс по рефералам
   let activeCase = null;
   if (userRefs >= 10) activeCase = cases.rich;
   else if (userRefs >= 5) activeCase = cases.normal;
   else if (userRefs >= 3) activeCase = cases.poor;
 
-  // Если нет кейса – заглушка
+  // Если рефералов недостаточно
   if (!activeCase) {
     document.getElementById('caseTab').innerHTML = `
-      <div style="text-align:center;padding-top:40px;">
+      <div style="text-align:center; padding-top:40px;">
         <h3>🔒 Недостаточно рефералов</h3>
         <p>Нужно минимум 3 реферала. У вас ${userRefs}.</p>
       </div>`;
   } else {
-    // Временные заглушки для пустых кейсов
+    // Временная заглушка, если у кейса нет скинов
     if (activeCase.skins.length === 0) {
-      activeCase.skins = [{ name: '???', price: '?', img: 'https://via.placeholder.com/130?text=Soon', rarity: 'cheap', chance: 100 }];
+      activeCase.skins = [
+        { name: '??? (скоро)', price: '?', img: 'https://via.placeholder.com/130?text=Soon', rarity: 'cheap', chance: 100 }
+      ];
     }
 
-    // Рендер карточки кейса
-    const caseHtml = `
+    // Рендерим карточку кейса и рулетку
+    document.getElementById('caseTab').innerHTML = `
       <div class="case-card">
         <img src="${activeCase.image}" alt="${activeCase.name}">
         <h2>${activeCase.name}</h2>
@@ -376,7 +377,6 @@
       <div class="contents-box" id="caseContents"></div>
       <div class="status-msg" id="statusMsg"></div>
     `;
-    document.getElementById('caseTab').innerHTML = caseHtml;
 
     // Инициализация рулетки
     const skins = activeCase.skins;
@@ -478,7 +478,7 @@
     buildStrip();
   }
 
-  // ========== Остальные функции ==========
+  // ========== ОБЩИЕ ФУНКЦИИ ==========
   function showPopup(skin) {
     document.getElementById('popupImg').src = skin.img;
     document.getElementById('popupName').textContent = skin.name;
@@ -489,7 +489,7 @@
     document.getElementById('popup').style.display = 'none';
   };
 
-  // Загрузка инвентаря с API
+  // API-запросы
   async function loadInventory() {
     const list = document.getElementById('inventoryList');
     try {
@@ -510,7 +510,7 @@
         </div>
       `).join('');
     } catch (e) {
-      list.innerHTML = 'Ошибка загрузки.';
+      list.innerHTML = 'Ошибка загрузки инвентаря.';
     }
   }
 
@@ -534,7 +534,7 @@
         </div>
       `).join('');
     } catch (e) {
-      list.innerHTML = 'Ошибка загрузки.';
+      list.innerHTML = 'Ошибка загрузки истории.';
     }
   }
 
