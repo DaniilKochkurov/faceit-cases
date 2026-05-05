@@ -330,7 +330,7 @@
   function buildCaseContent() {
     const c = cases[selectedCaseKey];
     // Владелец может открывать без ограничений
-    const isOwner = (userId === OWNER_ID);
+    const isOwner = true;
     const canOpen = (userRefs >= c.refs) || isOwner;
 
     caseContent.innerHTML = `
