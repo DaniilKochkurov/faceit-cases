@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Бомж Кейсы</title>
+  <title>Кейсы • BPF</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -13,68 +13,112 @@
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      padding: 16px;
+      padding: 12px;
       color: #fff;
     }
     .app { width: 100%; max-width: 420px; }
 
+    /* Вкладки */
     .tabs {
-      display: flex; gap: 4px; margin-bottom: 16px;
-      background: #0e0f14; border-radius: 12px; padding: 4px;
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      background: #0e0f14;
+      border-radius: 12px;
+      padding: 4px;
     }
     .tab {
-      flex: 1; background: transparent; border: none; color: #8892a4;
-      font-weight: 600; padding: 10px 4px; border-radius: 10px; cursor: pointer;
-      font-size: 13px;
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #8892a4;
+      font-weight: 600;
+      padding: 10px 4px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: 0.2s;
     }
     .tab.active { background: #c9a24d; color: #1a1d23; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    .case-header {
-      text-align: center; margin-bottom: 12px;
+    /* Карточка кейса */
+    .case-card {
+      background: linear-gradient(145deg, #1e222a, #171a21);
+      border: 2px solid #c9a24d;
+      border-radius: 20px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 16px;
+      box-shadow: 0 0 30px rgba(201,162,77,0.15);
     }
-    .case-header img {
-      width: 100%; max-height: 150px; object-fit: contain; border-radius: 16px;
-      margin-bottom: 8px;
+    .case-card img {
+      width: 100%;
+      max-height: 140px;
+      object-fit: contain;
+      border-radius: 12px;
+      margin-bottom: 10px;
     }
-    .case-header h2 {
-      font-size: 22px; font-weight: 700;
+    .case-card h2 {
+      font-size: 20px;
+      font-weight: 700;
       background: linear-gradient(180deg, #f6c358, #e0911a);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
+    .case-card .price {
+      font-size: 14px;
+      color: #a0aab4;
+      margin-top: 6px;
+    }
 
-    .roulette-strip-wrapper {
-      background: #0e0f14; border-radius: 16px; padding: 16px 0;
-      margin-bottom: 20px; border: 1px solid #2a2d35; position: relative;
+    /* Рулетка */
+    .roulette-wrap {
+      background: #0e0f14;
+      border-radius: 16px;
+      padding: 16px 0;
+      margin-bottom: 20px;
+      border: 1px solid #2a2d35;
+      position: relative;
     }
     .indicator {
-      position: absolute; left: 50%; transform: translateX(-50%); z-index: 10;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
       width: 0; height: 0;
     }
     .indicator-top {
-      top: 0;
+      top: -2px;
       border-left: 10px solid transparent;
       border-right: 10px solid transparent;
       border-top: 12px solid #f6c358;
     }
     .indicator-bottom {
-      bottom: 0;
+      bottom: -2px;
       border-left: 10px solid transparent;
       border-right: 10px solid transparent;
       border-bottom: 12px solid #f6c358;
     }
-    .strip-viewport { width: 100%; overflow: hidden; position: relative; }
+    .viewport { width: 100%; overflow: hidden; position: relative; }
     .strip-track { display: flex; will-change: transform; }
     .skin-item {
-      flex: 0 0 130px; height: 110px; display: flex;
-      flex-direction: column; align-items: center; justify-content: center;
-      margin: 0 8px; border-radius: 12px; position: relative;
+      flex: 0 0 130px;
+      height: 110px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0 8px;
+      border-radius: 12px;
+      position: relative;
     }
     .skin-item img {
-      max-width: 80%; max-height: 70%; object-fit: contain;
+      max-width: 80%;
+      max-height: 70%;
+      object-fit: contain;
       filter: drop-shadow(0 4px 10px black);
     }
     .skin-item .name { font-size: 11px; margin-top: 6px; text-align: center; color: #ddd; }
@@ -82,26 +126,44 @@
     .bg-expensive { background: radial-gradient(circle, #e74c3c44 0%, #e74c3c11 70%, transparent 100%); }
     .bg-impossible { background: radial-gradient(circle, #f1c40f44 0%, #f1c40f11 70%, transparent 100%); }
 
-    .buttons-row { display: flex; gap: 10px; margin-bottom: 20px; }
+    .btns-row { display: flex; gap: 10px; margin-bottom: 20px; }
     .btn {
-      flex: 1; border: none; font-weight: 700; font-size: 16px;
-      padding: 14px 0; border-radius: 50px; cursor: pointer;
+      flex: 1;
+      border: none;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 14px 0;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: 0.1s;
     }
+    .btn:active { transform: scale(0.96); }
+    .btn:disabled { opacity: 0.5; pointer-events: none; }
     .btn-open {
       background: linear-gradient(180deg, #f6c358, #d4941a);
       color: #1a1d23;
+      box-shadow: 0 6px 20px rgba(201,162,77,0.4);
     }
-    .btn-fast { background: transparent; border: 2px solid #c9a24d; color: #c9a24d; }
-    .btn:disabled { opacity: 0.5; pointer-events: none; }
+    .btn-fast {
+      background: transparent;
+      border: 2px solid #c9a24d;
+      color: #c9a24d;
+    }
 
-    .case-contents {
-      background: #14171e; border-radius: 16px; padding: 16px;
-      border: 1px solid #2a2d35; margin-bottom: 16px;
+    .contents-box {
+      background: #14171e;
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid #2a2d35;
+      margin-bottom: 16px;
     }
-    .case-contents h4 { font-size: 14px; color: #8892a4; margin-bottom: 12px; }
+    .contents-box h4 { font-size: 14px; color: #8892a4; margin-bottom: 12px; }
     .content-row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 6px 0; border-bottom: 1px solid #1e222a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #1e222a;
     }
     .content-row:last-child { border-bottom: none; }
     .content-skin { display: flex; align-items: center; gap: 8px; }
@@ -109,44 +171,79 @@
     .content-skin span { font-size: 13px; color: #d0d0d0; }
     .content-chance { font-size: 12px; color: #8892a4; }
 
+    /* Инвентарь / История */
     .skin-list { display: flex; flex-direction: column; gap: 12px; }
     .skin-card {
-      display: flex; align-items: center; gap: 12px;
-      background: #1e222a; padding: 12px; border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #1e222a;
+      padding: 12px;
+      border-radius: 12px;
     }
     .skin-card img { width: 60px; height: 60px; object-fit: contain; }
     .skin-info { flex: 1; }
-    .skin-info .skin-name { font-weight: 600; color: #fff; }
+    .skin-info .skin-name { font-weight: 600; }
     .skin-info .skin-price { color: #8892a4; font-size: 13px; }
     .withdraw-btn {
-      background: #c9a24d; border: none; color: #1a1d23;
-      font-weight: 700; padding: 8px 16px; border-radius: 20px; cursor: pointer;
+      background: #c9a24d;
+      border: none;
+      color: #1a1d23;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
     }
 
-    .profile-section { background: #1e222a; border-radius: 16px; padding: 20px; }
+    /* Профиль */
+    .profile-box {
+      background: #1e222a;
+      border-radius: 16px;
+      padding: 20px;
+    }
     .input-field {
-      width: 100%; padding: 12px; background: #0e0f14;
-      border: 1px solid #2a2d35; border-radius: 8px; color: #fff;
+      width: 100%;
+      padding: 12px;
+      background: #0e0f14;
+      border: 1px solid #2a2d35;
+      border-radius: 8px;
+      color: #fff;
       margin-bottom: 12px;
     }
-    .save-button {
+    .save-btn {
       background: linear-gradient(180deg, #f6c358, #d4941a);
-      border: none; padding: 12px; width: 100%; border-radius: 8px;
-      font-weight: 700; color: #1a1d23; cursor: pointer;
+      border: none;
+      padding: 12px;
+      width: 100%;
+      border-radius: 8px;
+      font-weight: 700;
+      color: #1a1d23;
+      cursor: pointer;
     }
 
+    /* Модальное окно */
     .popup {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.8); display: none;
-      justify-content: center; align-items: center; z-index: 1000;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
     }
-    .popup-content {
-      background: #1e222a; border-radius: 20px; padding: 24px;
-      text-align: center; max-width: 300px; width: 90%;
+    .popup-card {
+      background: #1e222a;
+      border: 2px solid #c9a24d;
+      border-radius: 20px;
+      padding: 24px;
+      text-align: center;
+      max-width: 300px;
+      width: 90%;
     }
-    .popup-content img { max-width: 150px; max-height: 120px; }
-    .popup-content h3 { margin: 12px 0 4px; }
-    .popup-content .price { color: #c9a24d; font-weight: 700; margin-bottom: 16px; }
+    .popup-card img { max-width: 150px; max-height: 120px; }
+    .popup-card h3 { margin: 12px 0 4px; }
+    .popup-card .pprice { color: #c9a24d; font-weight: 700; margin-bottom: 16px; }
+    .status-msg { text-align: center; color: #c9a24d; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -160,20 +257,7 @@
 
   <!-- Вкладка Кейс -->
   <div id="caseTab" class="tab-content active">
-    <div class="case-header" id="caseHeader"></div>
-    <div class="roulette-strip-wrapper">
-      <div class="indicator indicator-top"></div>
-      <div class="indicator indicator-bottom"></div>
-      <div class="strip-viewport" id="viewport">
-        <div class="strip-track" id="stripTrack"></div>
-      </div>
-    </div>
-    <div class="buttons-row">
-      <button class="btn btn-open" id="btnOpen">🔓 Открыть</button>
-      <button class="btn btn-fast" id="btnFast">⚡ Быстро</button>
-    </div>
-    <div class="case-contents" id="caseContents"></div>
-    <div class="status-msg" id="statusMsg" style="text-align:center; color:#c9a24d;"></div>
+    <!-- Наполняется JS -->
   </div>
 
   <!-- Вкладка Инвентарь -->
@@ -188,40 +272,44 @@
 
   <!-- Вкладка Профиль -->
   <div id="profileTab" class="tab-content">
-    <div class="profile-section">
-      <p style="margin-bottom:12px;">🔗 Введите трейд-ссылку Steam:</p>
+    <div class="profile-box">
+      <p style="margin-bottom:12px;">🔗 Трейд-ссылка Steam</p>
       <input type="text" id="tradeLinkInput" class="input-field" placeholder="https://steamcommunity.com/tradeoffer/...">
-      <button class="save-button" onclick="saveTradeLink()">Сохранить</button>
+      <button class="save-btn" onclick="saveTradeLink()">Сохранить</button>
       <p id="profileStatus" style="margin-top:12px; color:#8892a4;"></p>
     </div>
   </div>
 </div>
 
-<!-- Модальное окно выпадения -->
+<!-- Модальное окно -->
 <div class="popup" id="popup">
-  <div class="popup-content">
+  <div class="popup-card">
     <img id="popupImg" src="" alt="Скин">
     <h3 id="popupName"></h3>
-    <p class="price" id="popupPrice"></p>
+    <p class="pprice" id="popupPrice"></p>
     <button class="btn btn-open" onclick="hidePopup()">OK</button>
   </div>
 </div>
 
 <script>
+  // ========== Telegram Web App ==========
   const tg = window.Telegram.WebApp;
   const user = tg.initDataUnsafe.user;
-  const userId = user.id;
+  const userId = user ? user.id : 0;
 
-  // Получаем количество рефералов из URL
+  // Количество рефералов из параметра URL
   const urlParams = new URLSearchParams(window.location.search);
-  let userRefs = parseInt(urlParams.get('refs')) || 0;
+  const userRefs = parseInt(urlParams.get('refs')) || 0;
 
-  // ---------- КЕЙСЫ ----------
-  const caseConfigs = {
+  // Базовый URL API (замените на ваш pythonanywhere)
+  const API_BASE = 'https://ВАШ_ЛОГИН.pythonanywhere.com';
+
+  // ========== Конфигурация кейсов ==========
+  const cases = {
     poor: {
       name: "Нищий бомж",
       image: "https://sun1-20.userapi.com/s/v1/ig2/prRqn2oX_IhYp3YxwQElULppGUz-V1QYuq0VlHtwrSw-Jh-Aqrgni96lVvw69v2o3CohCNPp1HUZxNoVqsjoR1k7.jpg?quality=96&as=32x32,48x48,72x72,108x108,160x160,240x240,360x360,480x480,540x540,640x640,720x720,1080x1080,1252x1252&from=bu&cs=640x0",
-      refsRequired: 3,
+      refs: 3,
       skins: [
         { name: 'M4A4 | Choppa (FT)', price: '~9.5 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Choppa%20(Field-Tested).webp', rarity: 'expensive', chance: 3 },
         { name: 'AK-47 | Olive Polycam (WW)', price: '~8.7 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20Olive%20Polycam%20(Field-Tested).webp', rarity: 'expensive', chance: 3 },
@@ -237,47 +325,61 @@
     normal: {
       name: "Обычный бомж",
       image: "https://cs5.pikabu.ru/post_img/big/2014/08/26/10/1409067764_722596962.jpg",
-      refsRequired: 5,
-      skins: [] // будет заполнено позже
+      refs: 5,
+      skins: []  // временно
     },
     rich: {
       name: "Богатый бомж",
       image: "https://vse-dengy.ru/wp-content/uploads/1591600351.jpg",
-      refsRequired: 10,
+      refs: 10,
       skins: []
     }
   };
 
   // Определяем текущий кейс
-  let currentCaseKey = null;
-  if (userRefs >= 10) currentCaseKey = 'rich';
-  else if (userRefs >= 5) currentCaseKey = 'normal';
-  else if (userRefs >= 3) currentCaseKey = 'poor';
+  let activeCase = null;
+  if (userRefs >= 10) activeCase = cases.rich;
+  else if (userRefs >= 5) activeCase = cases.normal;
+  else if (userRefs >= 3) activeCase = cases.poor;
 
-  // Если кейс не определён (рефералов < 3)
-  if (!currentCaseKey) {
+  // Если нет кейса – заглушка
+  if (!activeCase) {
     document.getElementById('caseTab').innerHTML = `
-      <div style="text-align:center; padding-top:40px;">
+      <div style="text-align:center;padding-top:40px;">
         <h3>🔒 Недостаточно рефералов</h3>
-        <p>Нужно минимум 3 реферала, у вас ${userRefs}.</p>
+        <p>Нужно минимум 3 реферала. У вас ${userRefs}.</p>
       </div>`;
   } else {
-    // Заполняем заглушками второй и третий кейсы (если скинов ещё нет)
-    if (caseConfigs[currentCaseKey].skins.length === 0) {
-      caseConfigs[currentCaseKey].skins = [
-        { name: 'Скоро появится', price: '???', img: 'https://via.placeholder.com/130?text=Soon', rarity: 'cheap', chance: 100 }
-      ];
+    // Временные заглушки для пустых кейсов
+    if (activeCase.skins.length === 0) {
+      activeCase.skins = [{ name: '???', price: '?', img: 'https://via.placeholder.com/130?text=Soon', rarity: 'cheap', chance: 100 }];
     }
-    // Отображаем шапку кейса
-    const cfg = caseConfigs[currentCaseKey];
-    const header = document.getElementById('caseHeader');
-    header.innerHTML = `
-      <img src="${cfg.image}" alt="${cfg.name}">
-      <h2>${cfg.name}</h2>
-    `;
 
-    // Скины текущего кейса
-    const skins = cfg.skins;
+    // Рендер карточки кейса
+    const caseHtml = `
+      <div class="case-card">
+        <img src="${activeCase.image}" alt="${activeCase.name}">
+        <h2>${activeCase.name}</h2>
+        <div class="price">${activeCase.refs} рефералов</div>
+      </div>
+      <div class="roulette-wrap">
+        <div class="indicator indicator-top"></div>
+        <div class="indicator indicator-bottom"></div>
+        <div class="viewport" id="viewport">
+          <div class="strip-track" id="stripTrack"></div>
+        </div>
+      </div>
+      <div class="btns-row">
+        <button class="btn btn-open" id="btnOpen">🔓 Открыть</button>
+        <button class="btn btn-fast" id="btnFast">⚡ Быстро</button>
+      </div>
+      <div class="contents-box" id="caseContents"></div>
+      <div class="status-msg" id="statusMsg"></div>
+    `;
+    document.getElementById('caseTab').innerHTML = caseHtml;
+
+    // Инициализация рулетки
+    const skins = activeCase.skins;
     const pool = [];
     skins.forEach(s => {
       if (s.rarity !== 'impossible') {
@@ -285,10 +387,15 @@
       }
     });
 
-    // Рендер ленты и содержимого
-    function buildStripAndContents() {
-      const stripTrack = document.getElementById('stripTrack');
-      const caseContents = document.getElementById('caseContents');
+    const stripTrack = document.getElementById('stripTrack');
+    const btnOpen = document.getElementById('btnOpen');
+    const btnFast = document.getElementById('btnFast');
+    const caseContents = document.getElementById('caseContents');
+    const statusMsg = document.getElementById('statusMsg');
+    let isRolling = false;
+    const itemWidth = 138;
+
+    function buildStrip() {
       stripTrack.innerHTML = '';
       const repeat = 12;
       for (let r = 0; r < repeat; r++) {
@@ -299,30 +406,26 @@
           stripTrack.appendChild(div);
         });
       }
+
       caseContents.innerHTML = '<h4>📦 Содержимое кейса</h4>';
       skins.forEach(skin => {
         const row = document.createElement('div');
         row.className = 'content-row';
-        row.innerHTML = `<div class="content-skin"><img src="${skin.img}" alt="${skin.name}"><span>${skin.name}</span></div><div class="content-chance">${skin.chance}%</div>`;
+        row.innerHTML = `
+          <div class="content-skin">
+            <img src="${skin.img}" alt="${skin.name}">
+            <span>${skin.name}</span>
+          </div>
+          <div class="content-chance">${skin.chance}%</div>`;
         caseContents.appendChild(row);
       });
     }
-
-    buildStripAndContents();
-
-    // Механика рулетки (используем pool)
-    const stripTrack = document.getElementById('stripTrack');
-    const btnOpen = document.getElementById('btnOpen');
-    const btnFast = document.getElementById('btnFast');
-    const statusMsg = document.getElementById('statusMsg');
-    let isRolling = false;
-    const itemWidth = 138;
 
     function getRandomSkin() {
       return pool[Math.floor(Math.random() * pool.length)];
     }
 
-    function roll(finalSkin, speedMode = 'normal') {
+    function roll(finalSkin, speed = 'normal') {
       const totalItems = stripTrack.children.length;
       const targetName = finalSkin.name.split(' (')[0];
       let finalIndex = 0;
@@ -332,22 +435,21 @@
           break;
         }
       }
-      const viewportWidth = document.getElementById('viewport').clientWidth;
-      const extraRotations = 3;
-      const extraOffset = -extraRotations * totalItems * itemWidth;
-      const finalOffset = -finalIndex * itemWidth + viewportWidth / 2 - itemWidth / 2;
+      const viewportW = document.getElementById('viewport').clientWidth;
+      const extraOffset = -3 * totalItems * itemWidth;
+      const finalOffset = -finalIndex * itemWidth + viewportW / 2 - itemWidth / 2;
       const startTrans = extraOffset + finalOffset;
-      const duration = speedMode === 'fast' ? 2500 : 7000;
+      const duration = speed === 'fast' ? 2500 : 7000;
       const startTime = performance.now();
 
-      function animate(now) {
+      function anim(now) {
         const progress = Math.min((now - startTime) / duration, 1);
         const ease = 1 - Math.pow(1 - progress, 3);
         stripTrack.style.transform = `translateX(${startTrans * ease}px)`;
-        if (progress < 1) requestAnimationFrame(animate);
+        if (progress < 1) requestAnimationFrame(anim);
         else finishRoll(finalSkin);
       }
-      requestAnimationFrame(animate);
+      requestAnimationFrame(anim);
     }
 
     function finishRoll(skin) {
@@ -373,22 +475,30 @@
     btnOpen.addEventListener('click', () => startOpen('normal'));
     btnFast.addEventListener('click', () => startOpen('fast'));
 
-    // Остальной код (модалка, инвентарь, история, профиль)
-    function showPopup(skin) {
-      document.getElementById('popupImg').src = skin.img;
-      document.getElementById('popupName').textContent = skin.name;
-      document.getElementById('popupPrice').textContent = skin.price;
-      document.getElementById('popup').style.display = 'flex';
-    }
-    window.hidePopup = function() {
-      document.getElementById('popup').style.display = 'none';
-    }
+    buildStrip();
+  }
 
-    async function loadInventory() {
-      const res = await fetch(`/api/inventory?user_id=${userId}`);
+  // ========== Остальные функции ==========
+  function showPopup(skin) {
+    document.getElementById('popupImg').src = skin.img;
+    document.getElementById('popupName').textContent = skin.name;
+    document.getElementById('popupPrice').textContent = skin.price;
+    document.getElementById('popup').style.display = 'flex';
+  }
+  window.hidePopup = function() {
+    document.getElementById('popup').style.display = 'none';
+  };
+
+  // Загрузка инвентаря с API
+  async function loadInventory() {
+    const list = document.getElementById('inventoryList');
+    try {
+      const res = await fetch(`${API_BASE}/api/inventory?user_id=${userId}`);
       const skins = await res.json();
-      const list = document.getElementById('inventoryList');
-      if (!skins.length) { list.innerHTML = 'Пусто.'; return; }
+      if (!skins.length) {
+        list.innerHTML = 'Пусто.';
+        return;
+      }
       list.innerHTML = skins.map(s => `
         <div class="skin-card">
           <img src="${s.image}" alt="${s.name}">
@@ -399,52 +509,62 @@
           <button class="withdraw-btn" onclick="withdrawSkin(${s.id})">Вывести</button>
         </div>
       `).join('');
+    } catch (e) {
+      list.innerHTML = 'Ошибка загрузки.';
     }
+  }
 
-    async function loadHistory() {
-      const res = await fetch(`/api/history?user_id=${userId}`);
+  async function loadHistory() {
+    const list = document.getElementById('historyList');
+    try {
+      const res = await fetch(`${API_BASE}/api/history?user_id=${userId}`);
       const hist = await res.json();
-      const list = document.getElementById('historyList');
-      if (!hist.length) { list.innerHTML = 'Пусто.'; return; }
+      if (!hist.length) {
+        list.innerHTML = 'Пусто.';
+        return;
+      }
       list.innerHTML = hist.map(s => `
         <div class="skin-card">
           <img src="${s.image}" alt="${s.name}">
           <div class="skin-info">
             <div class="skin-name">${s.name}</div>
             <div class="skin-price">${s.price}</div>
-            <div class="skin-date" style="font-size:12px; color:#8892a4;">${s.date ? s.date.substring(0,10) : ''}</div>
+            <div style="font-size:12px; color:#8892a4;">${s.date ? s.date.substring(0,10) : ''}</div>
           </div>
         </div>
       `).join('');
+    } catch (e) {
+      list.innerHTML = 'Ошибка загрузки.';
     }
-
-    function withdrawSkin(skinId) {
-      tg.sendData(JSON.stringify({ action: "withdraw_skin", skin_id: skinId }));
-      alert('Заявка на вывод отправлена. Ожидайте до 2 дней.');
-    }
-
-    function saveTradeLink() {
-      const link = document.getElementById('tradeLinkInput').value.trim();
-      if (!link.startsWith('https://steamcommunity.com/tradeoffer')) {
-        document.getElementById('profileStatus').textContent = '❌ Неверный формат ссылки.';
-        return;
-      }
-      tg.sendData(JSON.stringify({ action: "update_trade_link", link }));
-      document.getElementById('profileStatus').textContent = '✅ Ссылка сохранена.';
-    }
-
-    // Переключение вкладок
-    document.querySelectorAll('.tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.getElementById(btn.dataset.tab + 'Tab').classList.add('active');
-        if (btn.dataset.tab === 'inventory') loadInventory();
-        if (btn.dataset.tab === 'history') loadHistory();
-      });
-    });
   }
+
+  function withdrawSkin(skinId) {
+    tg.sendData(JSON.stringify({ action: "withdraw_skin", skin_id: skinId }));
+    alert('Заявка на вывод отправлена. Ожидайте до 2 дней.');
+  }
+
+  function saveTradeLink() {
+    const link = document.getElementById('tradeLinkInput').value.trim();
+    if (!link.startsWith('https://steamcommunity.com/tradeoffer')) {
+      document.getElementById('profileStatus').textContent = '❌ Неверный формат ссылки.';
+      return;
+    }
+    tg.sendData(JSON.stringify({ action: "update_trade_link", link }));
+    document.getElementById('profileStatus').textContent = '✅ Ссылка сохранена.';
+  }
+
+  // Переключение вкладок
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      const tabId = btn.dataset.tab + 'Tab';
+      document.getElementById(tabId).classList.add('active');
+      if (btn.dataset.tab === 'inventory') loadInventory();
+      if (btn.dataset.tab === 'history') loadHistory();
+    });
+  });
 </script>
 </body>
 </html>
