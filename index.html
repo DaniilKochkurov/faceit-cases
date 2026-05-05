@@ -210,9 +210,7 @@
 
   <!-- Вкладка Кейсы -->
   <div id="caseTab" class="tab-content active">
-    <!-- Переключатель кейсов -->
     <div class="case-selector" id="caseSelector"></div>
-    <!-- Карточка выбранного кейса и рулетка -->
     <div id="caseContent"></div>
   </div>
 
@@ -255,7 +253,10 @@
   const urlParams = new URLSearchParams(window.location.search);
   const userRefs = parseInt(urlParams.get('refs')) || 0;
 
-  // ⚠️ ЗАМЕНИТЕ НА ВАШ PYTHONANYWHERE
+  // ID владельца (может открывать любой кейс без рефералов)
+  const OWNER_ID = 1225488154;
+
+  // API базовый URL
   const API_BASE = 'https://dankochkurov.pythonanywhere.com';
 
   // ========== КЕЙСЫ ==========
@@ -300,13 +301,11 @@
   }
 
   // ========== ТЕКУЩИЙ ВЫБРАННЫЙ КЕЙС ==========
-  let selectedCaseKey = 'poor'; // по умолчанию
+  let selectedCaseKey = 'poor';
 
-  // ========== DOM ЭЛЕМЕНТЫ (динамические) ==========
   const caseSelector = document.getElementById('caseSelector');
   const caseContent = document.getElementById('caseContent');
 
-  // ========== РЕНДЕР ПЕРЕКЛЮЧАТЕЛЯ КЕЙСОВ ==========
   function renderCaseSelector() {
     caseSelector.innerHTML = '';
     for (let key in cases) {
@@ -328,13 +327,12 @@
     }
   }
 
-  // ========== ПОСТРОЕНИЕ СОДЕРЖИМОГО КЕЙСА ==========
-  let currentRoll = null; // объект рулетки
   function buildCaseContent() {
     const c = cases[selectedCaseKey];
-    const canOpen = userRefs >= c.refs;
+    // Владелец может открывать без ограничений
+    const isOwner = (userId === OWNER_ID);
+    const canOpen = (userRefs >= c.refs) || isOwner;
 
-    // Строим HTML карточки и рулетки
     caseContent.innerHTML = `
       <div class="case-card">
         <img src="${c.image}" alt="${c.name}">
@@ -356,7 +354,6 @@
       <div class="status-msg" id="statusMsg"></div>
     `;
 
-    // Инициализация рулетки для выбранного кейса
     const skins = c.skins;
     const pool = [];
     skins.forEach(s => {
@@ -534,7 +531,6 @@
     document.getElementById('profileStatus').textContent = '✅ Ссылка сохранена.';
   }
 
-  // Переключение вкладок
   function setupTabs() {
     document.querySelectorAll('.tab').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -548,7 +544,6 @@
     });
   }
 
-  // Инициализация
   renderCaseSelector();
   buildCaseContent();
   setupTabs();
