@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Бомж кейс</title>
+  <title>Бомж Кейсы</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -18,42 +18,37 @@
     }
     .app { width: 100%; max-width: 420px; }
 
-    /* Вкладки */
     .tabs {
-      display: flex;
-      gap: 4px;
-      margin-bottom: 16px;
-      background: #0e0f14;
-      border-radius: 12px;
-      padding: 4px;
+      display: flex; gap: 4px; margin-bottom: 16px;
+      background: #0e0f14; border-radius: 12px; padding: 4px;
     }
     .tab {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: #8892a4;
-      font-weight: 600;
-      padding: 10px 4px;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: background 0.2s;
+      flex: 1; background: transparent; border: none; color: #8892a4;
+      font-weight: 600; padding: 10px 4px; border-radius: 10px; cursor: pointer;
       font-size: 13px;
     }
-    .tab.active {
-      background: #c9a24d;
-      color: #1a1d23;
-    }
+    .tab.active { background: #c9a24d; color: #1a1d23; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* Рулетка */
+    .case-header {
+      text-align: center; margin-bottom: 12px;
+    }
+    .case-header img {
+      width: 100%; max-height: 150px; object-fit: contain; border-radius: 16px;
+      margin-bottom: 8px;
+    }
+    .case-header h2 {
+      font-size: 22px; font-weight: 700;
+      background: linear-gradient(180deg, #f6c358, #e0911a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
     .roulette-strip-wrapper {
-      background: #0e0f14;
-      border-radius: 16px;
-      padding: 16px 0;
-      margin-bottom: 20px;
-      border: 1px solid #2a2d35;
-      position: relative;
+      background: #0e0f14; border-radius: 16px; padding: 16px 0;
+      margin-bottom: 20px; border: 1px solid #2a2d35; position: relative;
     }
     .indicator {
       position: absolute; left: 50%; transform: translateX(-50%); z-index: 10;
@@ -114,7 +109,6 @@
     .content-skin span { font-size: 13px; color: #d0d0d0; }
     .content-chance { font-size: 12px; color: #8892a4; }
 
-    /* Инвентарь / История */
     .skin-list { display: flex; flex-direction: column; gap: 12px; }
     .skin-card {
       display: flex; align-items: center; gap: 12px;
@@ -129,7 +123,6 @@
       font-weight: 700; padding: 8px 16px; border-radius: 20px; cursor: pointer;
     }
 
-    /* Профиль */
     .profile-section { background: #1e222a; border-radius: 16px; padding: 20px; }
     .input-field {
       width: 100%; padding: 12px; background: #0e0f14;
@@ -142,7 +135,6 @@
       font-weight: 700; color: #1a1d23; cursor: pointer;
     }
 
-    /* Модальное окно */
     .popup {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.8); display: none;
@@ -168,9 +160,7 @@
 
   <!-- Вкладка Кейс -->
   <div id="caseTab" class="tab-content active">
-    <div class="case-header" style="text-align:center; margin-bottom:16px;">
-      <h2 style="background: linear-gradient(180deg,#f6c358,#e0911a); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">Бомж кейс</h2>
-    </div>
+    <div class="case-header" id="caseHeader"></div>
     <div class="roulette-strip-wrapper">
       <div class="indicator indicator-top"></div>
       <div class="indicator indicator-bottom"></div>
@@ -222,179 +212,239 @@
   const user = tg.initDataUnsafe.user;
   const userId = user.id;
 
-  // Конфиг скинов (как раньше)
-  const skins = [
-    { name: 'M4A4 | Choppa (FT)', price: '~9.5 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Choppa%20(Field-Tested).webp', rarity: 'expensive', chance: 3 },
-    { name: 'AK-47 | Olive Polycam (WW)', price: '~8.7 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20Olive%20Polycam%20(Field-Tested).webp', rarity: 'expensive', chance: 3 },
-    { name: 'R8 Revolver | Grip (FT)', price: '~7.2 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/R8%20Revolver%20%7C%20Grip%20(Field-Tested).webp', rarity: 'expensive', chance: 3 },
-    { name: 'M4A4 | Steel Work (FT)', price: '~0.8 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Steel%20Work%20(Field-Tested).webp', rarity: 'cheap', chance: 18 },
-    { name: 'SSG 08 | Calligrafaux (WW)', price: '~1.1 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/SSG%2008%20%7C%20Calligrafaux%20(Well-Worn).webp', rarity: 'cheap', chance: 18 },
-    { name: 'Glock-18 | Ocean Topo (FT)', price: '~0.6 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Ocean%20Topo%20(Field-Tested).webp', rarity: 'cheap', chance: 18 },
-    { name: 'AK-47 | VariCamo Grey (FT)', price: '~1.5 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20VariCamo%20Grey%20(Field-Tested).webp', rarity: 'cheap', chance: 18 },
-    { name: 'M4A1-S | Wash me plz (FT)', price: '~0.9 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/M4A1-S%20%7C%20Wash%20me%20plz%20(Field-Tested).webp', rarity: 'cheap', chance: 18 },
-    { name: 'Glock-18 | Moonrise (FT)', price: '~98 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Moonrise%20(Field-Tested).webp', rarity: 'impossible', chance: 1 }
-  ];
+  // Получаем количество рефералов из URL
+  const urlParams = new URLSearchParams(window.location.search);
+  let userRefs = parseInt(urlParams.get('refs')) || 0;
 
-  // Пул (без impossible)
-  const pool = [];
-  skins.forEach(s => { if (s.rarity!=='impossible') for (let i=0; i<s.chance; i++) pool.push(s); });
+  // ---------- КЕЙСЫ ----------
+  const caseConfigs = {
+    poor: {
+      name: "Нищий бомж",
+      image: "https://sun1-20.userapi.com/s/v1/ig2/prRqn2oX_IhYp3YxwQElULppGUz-V1QYuq0VlHtwrSw-Jh-Aqrgni96lVvw69v2o3CohCNPp1HUZxNoVqsjoR1k7.jpg?quality=96&as=32x32,48x48,72x72,108x108,160x160,240x240,360x360,480x480,540x540,640x640,720x720,1080x1080,1252x1252&from=bu&cs=640x0",
+      refsRequired: 3,
+      skins: [
+        { name: 'M4A4 | Choppa (FT)', price: '~9.5 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Choppa%20(Field-Tested).webp', rarity: 'expensive', chance: 3 },
+        { name: 'AK-47 | Olive Polycam (WW)', price: '~8.7 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20Olive%20Polycam%20(Field-Tested).webp', rarity: 'expensive', chance: 3 },
+        { name: 'R8 Revolver | Grip (FT)', price: '~7.2 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/R8%20Revolver%20%7C%20Grip%20(Field-Tested).webp', rarity: 'expensive', chance: 3 },
+        { name: 'M4A4 | Steel Work (FT)', price: '~0.8 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Steel%20Work%20(Field-Tested).webp', rarity: 'cheap', chance: 18 },
+        { name: 'SSG 08 | Calligrafaux (WW)', price: '~1.1 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/SSG%2008%20%7C%20Calligrafaux%20(Well-Worn).webp', rarity: 'cheap', chance: 18 },
+        { name: 'Glock-18 | Ocean Topo (FT)', price: '~0.6 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Ocean%20Topo%20(Field-Tested).webp', rarity: 'cheap', chance: 18 },
+        { name: 'AK-47 | VariCamo Grey (FT)', price: '~1.5 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20VariCamo%20Grey%20(Field-Tested).webp', rarity: 'cheap', chance: 18 },
+        { name: 'M4A1-S | Wash me plz (FT)', price: '~0.9 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/M4A1-S%20%7C%20Wash%20me%20plz%20(Field-Tested).webp', rarity: 'cheap', chance: 18 },
+        { name: 'Glock-18 | Moonrise (FT)', price: '~98 ₽', img: 'https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Moonrise%20(Field-Tested).webp', rarity: 'impossible', chance: 1 }
+      ]
+    },
+    normal: {
+      name: "Обычный бомж",
+      image: "https://cs5.pikabu.ru/post_img/big/2014/08/26/10/1409067764_722596962.jpg",
+      refsRequired: 5,
+      skins: [] // будет заполнено позже
+    },
+    rich: {
+      name: "Богатый бомж",
+      image: "https://vse-dengy.ru/wp-content/uploads/1591600351.jpg",
+      refsRequired: 10,
+      skins: []
+    }
+  };
 
-  // DOM элементы
-  const stripTrack = document.getElementById('stripTrack');
-  const btnOpen = document.getElementById('btnOpen');
-  const btnFast = document.getElementById('btnFast');
-  const caseContents = document.getElementById('caseContents');
-  const statusMsg = document.getElementById('statusMsg');
-  let isRolling = false;
-  const itemWidth = 138;
+  // Определяем текущий кейс
+  let currentCaseKey = null;
+  if (userRefs >= 10) currentCaseKey = 'rich';
+  else if (userRefs >= 5) currentCaseKey = 'normal';
+  else if (userRefs >= 3) currentCaseKey = 'poor';
 
-  function buildStripAndContents() {
-    stripTrack.innerHTML = '';
-    const repeat = 12;
-    for (let r=0; r<repeat; r++) {
+  // Если кейс не определён (рефералов < 3)
+  if (!currentCaseKey) {
+    document.getElementById('caseTab').innerHTML = `
+      <div style="text-align:center; padding-top:40px;">
+        <h3>🔒 Недостаточно рефералов</h3>
+        <p>Нужно минимум 3 реферала, у вас ${userRefs}.</p>
+      </div>`;
+  } else {
+    // Заполняем заглушками второй и третий кейсы (если скинов ещё нет)
+    if (caseConfigs[currentCaseKey].skins.length === 0) {
+      caseConfigs[currentCaseKey].skins = [
+        { name: 'Скоро появится', price: '???', img: 'https://via.placeholder.com/130?text=Soon', rarity: 'cheap', chance: 100 }
+      ];
+    }
+    // Отображаем шапку кейса
+    const cfg = caseConfigs[currentCaseKey];
+    const header = document.getElementById('caseHeader');
+    header.innerHTML = `
+      <img src="${cfg.image}" alt="${cfg.name}">
+      <h2>${cfg.name}</h2>
+    `;
+
+    // Скины текущего кейса
+    const skins = cfg.skins;
+    const pool = [];
+    skins.forEach(s => {
+      if (s.rarity !== 'impossible') {
+        for (let i = 0; i < s.chance; i++) pool.push(s);
+      }
+    });
+
+    // Рендер ленты и содержимого
+    function buildStripAndContents() {
+      const stripTrack = document.getElementById('stripTrack');
+      const caseContents = document.getElementById('caseContents');
+      stripTrack.innerHTML = '';
+      const repeat = 12;
+      for (let r = 0; r < repeat; r++) {
+        skins.forEach(skin => {
+          const div = document.createElement('div');
+          div.className = `skin-item bg-${skin.rarity}`;
+          div.innerHTML = `<img src="${skin.img}" alt="${skin.name}"><div class="name">${skin.name.split(' (')[0]}</div>`;
+          stripTrack.appendChild(div);
+        });
+      }
+      caseContents.innerHTML = '<h4>📦 Содержимое кейса</h4>';
       skins.forEach(skin => {
-        const div = document.createElement('div');
-        div.className = `skin-item bg-${skin.rarity}`;
-        div.innerHTML = `<img src="${skin.img}" alt="${skin.name}"><div class="name">${skin.name.split(' (')[0]}</div>`;
-        stripTrack.appendChild(div);
+        const row = document.createElement('div');
+        row.className = 'content-row';
+        row.innerHTML = `<div class="content-skin"><img src="${skin.img}" alt="${skin.name}"><span>${skin.name}</span></div><div class="content-chance">${skin.chance}%</div>`;
+        caseContents.appendChild(row);
       });
     }
-    caseContents.innerHTML = '<h4>📦 Содержимое кейса</h4>';
-    skins.forEach(skin => {
-      const row = document.createElement('div');
-      row.className = 'content-row';
-      row.innerHTML = `<div class="content-skin"><img src="${skin.img}" alt="${skin.name}"><span>${skin.name}</span></div><div class="content-chance">${skin.chance}%</div>`;
-      caseContents.appendChild(row);
-    });
-  }
 
-  function getRandomSkin() { return pool[Math.floor(Math.random()*pool.length)]; }
+    buildStripAndContents();
 
-  function roll(finalSkin, speedMode='normal') {
-    const totalItems = stripTrack.children.length;
-    const targetName = finalSkin.name.split(' (')[0];
-    let finalIndex = 0;
-    for (let i=0; i<totalItems; i++) {
-      if (stripTrack.children[i].querySelector('.name').textContent === targetName) {
-        finalIndex = i; break;
+    // Механика рулетки (используем pool)
+    const stripTrack = document.getElementById('stripTrack');
+    const btnOpen = document.getElementById('btnOpen');
+    const btnFast = document.getElementById('btnFast');
+    const statusMsg = document.getElementById('statusMsg');
+    let isRolling = false;
+    const itemWidth = 138;
+
+    function getRandomSkin() {
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function roll(finalSkin, speedMode = 'normal') {
+      const totalItems = stripTrack.children.length;
+      const targetName = finalSkin.name.split(' (')[0];
+      let finalIndex = 0;
+      for (let i = 0; i < totalItems; i++) {
+        if (stripTrack.children[i].querySelector('.name').textContent === targetName) {
+          finalIndex = i;
+          break;
+        }
       }
+      const viewportWidth = document.getElementById('viewport').clientWidth;
+      const extraRotations = 3;
+      const extraOffset = -extraRotations * totalItems * itemWidth;
+      const finalOffset = -finalIndex * itemWidth + viewportWidth / 2 - itemWidth / 2;
+      const startTrans = extraOffset + finalOffset;
+      const duration = speedMode === 'fast' ? 2500 : 7000;
+      const startTime = performance.now();
+
+      function animate(now) {
+        const progress = Math.min((now - startTime) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        stripTrack.style.transform = `translateX(${startTrans * ease}px)`;
+        if (progress < 1) requestAnimationFrame(animate);
+        else finishRoll(finalSkin);
+      }
+      requestAnimationFrame(animate);
     }
-    const viewportWidth = document.getElementById('viewport').clientWidth;
-    const extraRotations = 3;
-    const extraOffset = -extraRotations * totalItems * itemWidth;
-    const finalOffset = -finalIndex * itemWidth + viewportWidth/2 - itemWidth/2;
-    const startTrans = extraOffset + finalOffset;
-    const duration = speedMode==='fast' ? 2500 : 7000;
-    const startTime = performance.now();
 
-    function animate(now) {
-      const progress = Math.min((now-startTime)/duration, 1);
-      const ease = 1 - Math.pow(1-progress, 3);
-      stripTrack.style.transform = `translateX(${startTrans * ease}px)`;
-      if (progress < 1) requestAnimationFrame(animate);
-      else finishRoll(finalSkin);
+    function finishRoll(skin) {
+      isRolling = false;
+      btnOpen.disabled = false;
+      btnFast.disabled = false;
+      showPopup(skin);
+      tg.sendData(JSON.stringify({
+        action: "drop_skin",
+        skin: { name: skin.name, price: skin.price, image: skin.img, rarity: skin.rarity }
+      }));
     }
-    requestAnimationFrame(animate);
-  }
 
-  function finishRoll(skin) {
-    isRolling = false;
-    btnOpen.disabled = false;
-    btnFast.disabled = false;
-    showPopup(skin);
-    // Отправляем в бота
-    tg.sendData(JSON.stringify({
-      action: "drop_skin",
-      skin: { name: skin.name, price: skin.price, image: skin.img, rarity: skin.rarity }
-    }));
-  }
+    function startOpen(speed = 'normal') {
+      if (isRolling) return;
+      isRolling = true;
+      btnOpen.disabled = true;
+      btnFast.disabled = true;
+      statusMsg.textContent = speed === 'fast' ? 'Быстрое открытие...' : 'Крутим...';
+      roll(getRandomSkin(), speed);
+    }
 
-  function startOpen(speed='normal') {
-    if (isRolling) return;
-    isRolling = true;
-    btnOpen.disabled = true;
-    btnFast.disabled = true;
-    statusMsg.textContent = speed==='fast' ? 'Быстрое открытие...' : 'Крутим...';
-    roll(getRandomSkin(), speed);
-  }
+    btnOpen.addEventListener('click', () => startOpen('normal'));
+    btnFast.addEventListener('click', () => startOpen('fast'));
 
-  // Модальное окно
-  function showPopup(skin) {
-    document.getElementById('popupImg').src = skin.img;
-    document.getElementById('popupName').textContent = skin.name;
-    document.getElementById('popupPrice').textContent = skin.price;
-    document.getElementById('popup').style.display = 'flex';
-  }
-  function hidePopup() {
-    document.getElementById('popup').style.display = 'none';
-  }
+    // Остальной код (модалка, инвентарь, история, профиль)
+    function showPopup(skin) {
+      document.getElementById('popupImg').src = skin.img;
+      document.getElementById('popupName').textContent = skin.name;
+      document.getElementById('popupPrice').textContent = skin.price;
+      document.getElementById('popup').style.display = 'flex';
+    }
+    window.hidePopup = function() {
+      document.getElementById('popup').style.display = 'none';
+    }
 
-  // Инвентарь и История
-  async function loadInventory() {
-    const res = await fetch(`/api/inventory?user_id=${userId}`);
-    const skins = await res.json();
-    const list = document.getElementById('inventoryList');
-    if (!skins.length) { list.innerHTML = 'Пусто.'; return; }
-    list.innerHTML = skins.map(s => `
-      <div class="skin-card">
-        <img src="${s.image}" alt="${s.name}">
-        <div class="skin-info">
-          <div class="skin-name">${s.name}</div>
-          <div class="skin-price">${s.price}</div>
+    async function loadInventory() {
+      const res = await fetch(`/api/inventory?user_id=${userId}`);
+      const skins = await res.json();
+      const list = document.getElementById('inventoryList');
+      if (!skins.length) { list.innerHTML = 'Пусто.'; return; }
+      list.innerHTML = skins.map(s => `
+        <div class="skin-card">
+          <img src="${s.image}" alt="${s.name}">
+          <div class="skin-info">
+            <div class="skin-name">${s.name}</div>
+            <div class="skin-price">${s.price}</div>
+          </div>
+          <button class="withdraw-btn" onclick="withdrawSkin(${s.id})">Вывести</button>
         </div>
-        <button class="withdraw-btn" onclick="withdrawSkin(${s.id})">Вывести</button>
-      </div>
-    `).join('');
-  }
-
-  async function loadHistory() {
-    const res = await fetch(`/api/history?user_id=${userId}`);
-    const hist = await res.json();
-    const list = document.getElementById('historyList');
-    if (!hist.length) { list.innerHTML = 'Пусто.'; return; }
-    list.innerHTML = hist.map(s => `
-      <div class="skin-card">
-        <img src="${s.image}" alt="${s.name}">
-        <div class="skin-info">
-          <div class="skin-name">${s.name}</div>
-          <div class="skin-price">${s.price}</div>
-          <div class="skin-date" style="font-size:12px; color:#8892a4;">${s.date ? s.date.substring(0,10) : ''}</div>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  function withdrawSkin(skinId) {
-    tg.sendData(JSON.stringify({ action: "withdraw_skin", skin_id: skinId }));
-    alert('Заявка на вывод отправлена. Ожидайте до 2 дней.');
-  }
-
-  function saveTradeLink() {
-    const link = document.getElementById('tradeLinkInput').value.trim();
-    if (!link.startsWith('https://steamcommunity.com/tradeoffer')) {
-      document.getElementById('profileStatus').textContent = '❌ Неверный формат ссылки.';
-      return;
+      `).join('');
     }
-    tg.sendData(JSON.stringify({ action: "update_trade_link", link }));
-    document.getElementById('profileStatus').textContent = '✅ Ссылка сохранена.';
-  }
 
-  // Переключение вкладок
-  document.querySelectorAll('.tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      document.getElementById(btn.dataset.tab + 'Tab').classList.add('active');
-      if (btn.dataset.tab === 'inventory') loadInventory();
-      if (btn.dataset.tab === 'history') loadHistory();
+    async function loadHistory() {
+      const res = await fetch(`/api/history?user_id=${userId}`);
+      const hist = await res.json();
+      const list = document.getElementById('historyList');
+      if (!hist.length) { list.innerHTML = 'Пусто.'; return; }
+      list.innerHTML = hist.map(s => `
+        <div class="skin-card">
+          <img src="${s.image}" alt="${s.name}">
+          <div class="skin-info">
+            <div class="skin-name">${s.name}</div>
+            <div class="skin-price">${s.price}</div>
+            <div class="skin-date" style="font-size:12px; color:#8892a4;">${s.date ? s.date.substring(0,10) : ''}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function withdrawSkin(skinId) {
+      tg.sendData(JSON.stringify({ action: "withdraw_skin", skin_id: skinId }));
+      alert('Заявка на вывод отправлена. Ожидайте до 2 дней.');
+    }
+
+    function saveTradeLink() {
+      const link = document.getElementById('tradeLinkInput').value.trim();
+      if (!link.startsWith('https://steamcommunity.com/tradeoffer')) {
+        document.getElementById('profileStatus').textContent = '❌ Неверный формат ссылки.';
+        return;
+      }
+      tg.sendData(JSON.stringify({ action: "update_trade_link", link }));
+      document.getElementById('profileStatus').textContent = '✅ Ссылка сохранена.';
+    }
+
+    // Переключение вкладок
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(btn.dataset.tab + 'Tab').classList.add('active');
+        if (btn.dataset.tab === 'inventory') loadInventory();
+        if (btn.dataset.tab === 'history') loadHistory();
+      });
     });
-  });
-
-  // Инициализация
-  buildStripAndContents();
-  btnOpen.addEventListener('click', () => startOpen('normal'));
-  btnFast.addEventListener('click', () => startOpen('fast'));
+  }
 </script>
 </body>
 </html>
