@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Кейсы • BPF</title>
+  <title>Бомж Кейсы • BPF</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -20,74 +20,75 @@
 
     /* Вкладки */
     .tabs {
-      display: flex;
-      gap: 4px;
-      margin-bottom: 16px;
-      background: #0e0f14;
-      border-radius: 12px;
-      padding: 4px;
+      display: flex; gap: 4px; margin-bottom: 16px;
+      background: #0e0f14; border-radius: 12px; padding: 4px;
     }
     .tab {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: #8892a4;
-      font-weight: 600;
-      padding: 10px 4px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 12px;
-      transition: 0.2s;
+      flex: 1; background: transparent; border: none; color: #8892a4;
+      font-weight: 600; padding: 10px 4px; border-radius: 10px; cursor: pointer;
+      font-size: 12px; transition: 0.2s;
     }
     .tab.active { background: #c9a24d; color: #1a1d23; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* Карточка кейса */
+    /* Выбор кейса (три карточки) */
+    .case-selector {
+      display: flex; gap: 8px; margin-bottom: 16px;
+    }
+    .case-option {
+      flex: 1; background: #1e222a; border: 2px solid #2a2d35;
+      border-radius: 16px; padding: 12px 8px; text-align: center;
+      cursor: pointer; transition: 0.2s;
+    }
+    .case-option.active {
+      border-color: #c9a24d;
+      box-shadow: 0 0 15px rgba(201,162,77,0.3);
+    }
+    .case-option img {
+      width: 100%; height: 70px; object-fit: contain; border-radius: 8px;
+      margin-bottom: 6px;
+    }
+    .case-option .cname {
+      font-size: 12px; font-weight: 700;
+      background: linear-gradient(180deg, #f6c358, #e0911a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .case-option .crefs {
+      font-size: 10px; color: #8892a4; margin-top: 2px;
+    }
+
+    /* Карточка кейса и рулетка */
     .case-card {
       background: linear-gradient(145deg, #1e222a, #171a21);
       border: 2px solid #c9a24d;
-      border-radius: 20px;
-      padding: 16px;
-      text-align: center;
+      border-radius: 20px; padding: 16px; text-align: center;
       margin-bottom: 16px;
       box-shadow: 0 0 30px rgba(201,162,77,0.15);
     }
     .case-card img {
-      width: 100%;
-      max-height: 140px;
-      object-fit: contain;
-      border-radius: 12px;
-      margin-bottom: 10px;
+      width: 100%; max-height: 140px; object-fit: contain;
+      border-radius: 12px; margin-bottom: 10px;
     }
     .case-card h2 {
-      font-size: 20px;
-      font-weight: 700;
+      font-size: 20px; font-weight: 700;
       background: linear-gradient(180deg, #f6c358, #e0911a);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
     .case-card .price {
-      font-size: 14px;
-      color: #a0aab4;
-      margin-top: 6px;
+      font-size: 14px; color: #a0aab4; margin-top: 6px;
     }
 
-    /* Рулетка */
     .roulette-wrap {
-      background: #0e0f14;
-      border-radius: 16px;
-      padding: 16px 0;
-      margin-bottom: 20px;
-      border: 1px solid #2a2d35;
-      position: relative;
+      background: #0e0f14; border-radius: 16px; padding: 16px 0;
+      margin-bottom: 20px; border: 1px solid #2a2d35; position: relative;
     }
     .indicator {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
+      position: absolute; left: 50%; transform: translateX(-50%); z-index: 10;
       width: 0; height: 0;
     }
     .indicator-top {
@@ -105,20 +106,12 @@
     .viewport { width: 100%; overflow: hidden; position: relative; }
     .strip-track { display: flex; will-change: transform; }
     .skin-item {
-      flex: 0 0 130px;
-      height: 110px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      margin: 0 8px;
-      border-radius: 12px;
-      position: relative;
+      flex: 0 0 130px; height: 110px; display: flex;
+      flex-direction: column; align-items: center; justify-content: center;
+      margin: 0 8px; border-radius: 12px; position: relative;
     }
     .skin-item img {
-      max-width: 80%;
-      max-height: 70%;
-      object-fit: contain;
+      max-width: 80%; max-height: 70%; object-fit: contain;
       filter: drop-shadow(0 4px 10px black);
     }
     .skin-item .name { font-size: 11px; margin-top: 6px; text-align: center; color: #ddd; }
@@ -128,13 +121,8 @@
 
     .btns-row { display: flex; gap: 10px; margin-bottom: 20px; }
     .btn {
-      flex: 1;
-      border: none;
-      font-weight: 700;
-      font-size: 16px;
-      padding: 14px 0;
-      border-radius: 50px;
-      cursor: pointer;
+      flex: 1; border: none; font-weight: 700; font-size: 16px;
+      padding: 14px 0; border-radius: 50px; cursor: pointer;
       transition: 0.1s;
     }
     .btn:active { transform: scale(0.96); }
@@ -145,25 +133,18 @@
       box-shadow: 0 6px 20px rgba(201,162,77,0.4);
     }
     .btn-fast {
-      background: transparent;
-      border: 2px solid #c9a24d;
+      background: transparent; border: 2px solid #c9a24d;
       color: #c9a24d;
     }
 
     .contents-box {
-      background: #14171e;
-      border-radius: 16px;
-      padding: 16px;
-      border: 1px solid #2a2d35;
-      margin-bottom: 16px;
+      background: #14171e; border-radius: 16px; padding: 16px;
+      border: 1px solid #2a2d35; margin-bottom: 16px;
     }
     .contents-box h4 { font-size: 14px; color: #8892a4; margin-bottom: 12px; }
     .content-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px solid #1e222a;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 0; border-bottom: 1px solid #1e222a;
     }
     .content-row:last-child { border-bottom: none; }
     .content-skin { display: flex; align-items: center; gap: 8px; }
@@ -174,72 +155,43 @@
     /* Инвентарь / История */
     .skin-list { display: flex; flex-direction: column; gap: 12px; }
     .skin-card {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: #1e222a;
-      padding: 12px;
-      border-radius: 12px;
+      display: flex; align-items: center; gap: 12px;
+      background: #1e222a; padding: 12px; border-radius: 12px;
     }
     .skin-card img { width: 60px; height: 60px; object-fit: contain; }
     .skin-info { flex: 1; }
     .skin-info .skin-name { font-weight: 600; }
     .skin-info .skin-price { color: #8892a4; font-size: 13px; }
     .withdraw-btn {
-      background: #c9a24d;
-      border: none;
-      color: #1a1d23;
-      font-weight: 700;
-      padding: 8px 16px;
-      border-radius: 20px;
-      cursor: pointer;
+      background: #c9a24d; border: none; color: #1a1d23;
+      font-weight: 700; padding: 8px 16px; border-radius: 20px; cursor: pointer;
     }
 
     /* Профиль */
     .profile-box {
-      background: #1e222a;
-      border-radius: 16px;
-      padding: 20px;
+      background: #1e222a; border-radius: 16px; padding: 20px;
     }
     .input-field {
-      width: 100%;
-      padding: 12px;
-      background: #0e0f14;
-      border: 1px solid #2a2d35;
-      border-radius: 8px;
-      color: #fff;
-      margin-bottom: 12px;
-      font-size: 14px;
+      width: 100%; padding: 12px; background: #0e0f14;
+      border: 1px solid #2a2d35; border-radius: 8px; color: #fff;
+      margin-bottom: 12px; font-size: 14px;
     }
     .save-btn {
       background: linear-gradient(180deg, #f6c358, #d4941a);
-      border: none;
-      padding: 12px;
-      width: 100%;
-      border-radius: 8px;
-      font-weight: 700;
-      color: #1a1d23;
-      cursor: pointer;
+      border: none; padding: 12px; width: 100%; border-radius: 8px;
+      font-weight: 700; color: #1a1d23; cursor: pointer;
     }
 
     /* Модальное окно */
     .popup {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85); display: none;
+      justify-content: center; align-items: center; z-index: 1000;
     }
     .popup-card {
-      background: #1e222a;
-      border: 2px solid #c9a24d;
-      border-radius: 20px;
-      padding: 24px;
-      text-align: center;
-      max-width: 300px;
-      width: 90%;
+      background: #1e222a; border: 2px solid #c9a24d;
+      border-radius: 20px; padding: 24px; text-align: center;
+      max-width: 300px; width: 90%;
     }
     .popup-card img { max-width: 150px; max-height: 120px; }
     .popup-card h3 { margin: 12px 0 4px; }
@@ -250,14 +202,19 @@
 <body>
 <div class="app">
   <div class="tabs">
-    <button class="tab active" data-tab="case">🎁 Кейс</button>
+    <button class="tab active" data-tab="case">🎁 Кейсы</button>
     <button class="tab" data-tab="inventory">📦 Инвентарь</button>
     <button class="tab" data-tab="history">📜 История</button>
     <button class="tab" data-tab="profile">⚙️ Профиль</button>
   </div>
 
-  <!-- Вкладка Кейс -->
-  <div id="caseTab" class="tab-content active"></div>
+  <!-- Вкладка Кейсы -->
+  <div id="caseTab" class="tab-content active">
+    <!-- Переключатель кейсов -->
+    <div class="case-selector" id="caseSelector"></div>
+    <!-- Карточка выбранного кейса и рулетка -->
+    <div id="caseContent"></div>
+  </div>
 
   <!-- Вкладка Инвентарь -->
   <div id="inventoryTab" class="tab-content">
@@ -280,7 +237,6 @@
   </div>
 </div>
 
-<!-- Модальное окно выпадения -->
 <div class="popup" id="popup">
   <div class="popup-card">
     <img id="popupImg" src="" alt="Скин">
@@ -296,16 +252,16 @@
   const user = tg.initDataUnsafe.user;
   const userId = user ? user.id : 0;
 
-  // Количество рефералов из URL (?refs=...)
   const urlParams = new URLSearchParams(window.location.search);
   const userRefs = parseInt(urlParams.get('refs')) || 0;
 
-  // ⚠️ ЗАМЕНИТЕ НА ВАШ ДОМЕН PYTHONANYWHERE
+  // ⚠️ ЗАМЕНИТЕ НА ВАШ PYTHONANYWHERE
   const API_BASE = 'https://dankochkurov.pythonanywhere.com';
 
-  // ========== КОНФИГУРАЦИЯ КЕЙСОВ ==========
+  // ========== КЕЙСЫ ==========
   const cases = {
     poor: {
+      key: 'poor',
       name: "Нищий бомж",
       image: "https://sun1-20.userapi.com/s/v1/ig2/prRqn2oX_IhYp3YxwQElULppGUz-V1QYuq0VlHtwrSw-Jh-Aqrgni96lVvw69v2o3CohCNPp1HUZxNoVqsjoR1k7.jpg?quality=96&as=32x32,48x48,72x72,108x108,160x160,240x240,360x360,480x480,540x540,640x640,720x720,1080x1080,1252x1252&from=bu&cs=640x0",
       refs: 3,
@@ -322,46 +278,68 @@
       ]
     },
     normal: {
+      key: 'normal',
       name: "Обычный бомж",
       image: "https://cs5.pikabu.ru/post_img/big/2014/08/26/10/1409067764_722596962.jpg",
       refs: 5,
       skins: []  // заполните позже
     },
     rich: {
+      key: 'rich',
       name: "Богатый бомж",
       image: "https://vse-dengy.ru/wp-content/uploads/1591600351.jpg",
       refs: 10,
       skins: []
     }
   };
-
-  // Определяем активный кейс по рефералам
-  let activeCase = null;
-  if (userRefs >= 10) activeCase = cases.rich;
-  else if (userRefs >= 5) activeCase = cases.normal;
-  else if (userRefs >= 3) activeCase = cases.poor;
-
-  // Если рефералов недостаточно
-  if (!activeCase) {
-    document.getElementById('caseTab').innerHTML = `
-      <div style="text-align:center; padding-top:40px;">
-        <h3>🔒 Недостаточно рефералов</h3>
-        <p>Нужно минимум 3 реферала. У вас ${userRefs}.</p>
-      </div>`;
-  } else {
-    // Временная заглушка, если у кейса нет скинов
-    if (activeCase.skins.length === 0) {
-      activeCase.skins = [
-        { name: '??? (скоро)', price: '?', img: 'https://via.placeholder.com/130?text=Soon', rarity: 'cheap', chance: 100 }
-      ];
+  // Заглушка для пустых кейсов
+  for (let k in cases) {
+    if (!cases[k].skins.length) {
+      cases[k].skins = [{ name: '??? (скоро)', price: '?', img: 'https://via.placeholder.com/130?text=Soon', rarity: 'cheap', chance: 100 }];
     }
+  }
 
-    // Рендерим карточку кейса и рулетку
-    document.getElementById('caseTab').innerHTML = `
+  // ========== ТЕКУЩИЙ ВЫБРАННЫЙ КЕЙС ==========
+  let selectedCaseKey = 'poor'; // по умолчанию
+
+  // ========== DOM ЭЛЕМЕНТЫ (динамические) ==========
+  const caseSelector = document.getElementById('caseSelector');
+  const caseContent = document.getElementById('caseContent');
+
+  // ========== РЕНДЕР ПЕРЕКЛЮЧАТЕЛЯ КЕЙСОВ ==========
+  function renderCaseSelector() {
+    caseSelector.innerHTML = '';
+    for (let key in cases) {
+      const c = cases[key];
+      const div = document.createElement('div');
+      div.className = 'case-option' + (key === selectedCaseKey ? ' active' : '');
+      div.dataset.key = key;
+      div.innerHTML = `
+        <img src="${c.image}" alt="${c.name}">
+        <div class="cname">${c.name}</div>
+        <div class="crefs">${c.refs} рефералов</div>
+      `;
+      div.addEventListener('click', () => {
+        selectedCaseKey = key;
+        renderCaseSelector();
+        buildCaseContent();
+      });
+      caseSelector.appendChild(div);
+    }
+  }
+
+  // ========== ПОСТРОЕНИЕ СОДЕРЖИМОГО КЕЙСА ==========
+  let currentRoll = null; // объект рулетки
+  function buildCaseContent() {
+    const c = cases[selectedCaseKey];
+    const canOpen = userRefs >= c.refs;
+
+    // Строим HTML карточки и рулетки
+    caseContent.innerHTML = `
       <div class="case-card">
-        <img src="${activeCase.image}" alt="${activeCase.name}">
-        <h2>${activeCase.name}</h2>
-        <div class="price">${activeCase.refs} рефералов</div>
+        <img src="${c.image}" alt="${c.name}">
+        <h2>${c.name}</h2>
+        <div class="price">${c.refs} рефералов</div>
       </div>
       <div class="roulette-wrap">
         <div class="indicator indicator-top"></div>
@@ -371,15 +349,15 @@
         </div>
       </div>
       <div class="btns-row">
-        <button class="btn btn-open" id="btnOpen">🔓 Открыть</button>
-        <button class="btn btn-fast" id="btnFast">⚡ Быстро</button>
+        <button class="btn btn-open" id="btnOpen" ${canOpen ? '' : 'disabled'}>🔓 Открыть${canOpen ? '' : ' (нужно ' + c.refs + ' реф.)'}</button>
+        <button class="btn btn-fast" id="btnFast" ${canOpen ? '' : 'disabled'}>⚡ Быстро${canOpen ? '' : ' (нужно ' + c.refs + ' реф.)'}</button>
       </div>
       <div class="contents-box" id="caseContents"></div>
       <div class="status-msg" id="statusMsg"></div>
     `;
 
-    // Инициализация рулетки
-    const skins = activeCase.skins;
+    // Инициализация рулетки для выбранного кейса
+    const skins = c.skins;
     const pool = [];
     skins.forEach(s => {
       if (s.rarity !== 'impossible') {
@@ -454,8 +432,8 @@
 
     function finishRoll(skin) {
       isRolling = false;
-      btnOpen.disabled = false;
-      btnFast.disabled = false;
+      btnOpen.disabled = !canOpen;
+      btnFast.disabled = !canOpen;
       showPopup(skin);
       tg.sendData(JSON.stringify({
         action: "drop_skin",
@@ -464,6 +442,10 @@
     }
 
     function startOpen(speed = 'normal') {
+      if (!canOpen) {
+        alert(`Нужно ${c.refs} рефералов. У вас ${userRefs}.`);
+        return;
+      }
       if (isRolling) return;
       isRolling = true;
       btnOpen.disabled = true;
@@ -489,7 +471,6 @@
     document.getElementById('popup').style.display = 'none';
   };
 
-  // API-запросы
   async function loadInventory() {
     const list = document.getElementById('inventoryList');
     try {
@@ -554,17 +535,23 @@
   }
 
   // Переключение вкладок
-  document.querySelectorAll('.tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      const tabId = btn.dataset.tab + 'Tab';
-      document.getElementById(tabId).classList.add('active');
-      if (btn.dataset.tab === 'inventory') loadInventory();
-      if (btn.dataset.tab === 'history') loadHistory();
+  function setupTabs() {
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(btn.dataset.tab + 'Tab').classList.add('active');
+        if (btn.dataset.tab === 'inventory') loadInventory();
+        if (btn.dataset.tab === 'history') loadHistory();
+      });
     });
-  });
+  }
+
+  // Инициализация
+  renderCaseSelector();
+  buildCaseContent();
+  setupTabs();
 </script>
 </body>
 </html>
