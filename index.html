@@ -295,7 +295,7 @@
     </div>
 
     <div class="buttons">
-        <button class="open-btn slow-btn" id="slowOpenBtn">🐢 ОБЫЧНО</button>
+        <button class="open-btn slow-btn" id="slowOpenBtn">🐢 5 СЕКУНД</button>
         <button class="open-btn" id="fastOpenBtn">⚡ БЫСТРО</button>
     </div>
 </div>
@@ -363,7 +363,7 @@
         return nonMythic[0];
     }
 
-    // Генерация ленты: жёлтые вставляем через одного, чтобы они были рядом, но не под стрелкой
+    // Генерация ленты: жёлтые через один, чтобы они были рядом
     function buildDisplayArray(length = 60) {
         const result = [];
         const mythic = skinLibrary.find(s => s.rarity === 'mythic');
@@ -374,7 +374,7 @@
                 result.push({ ...mythic });
             }
         }
-        // Небольшое случайное перемешивание, но сохраняем соседство
+        // Небольшое случайное перемешивание, чтобы не было слишком предсказуемо
         for (let i = 0; i < result.length; i++) {
             if (Math.random() < 0.15 && i+1 < result.length) {
                 [result[i], result[i+1]] = [result[i+1], result[i]];
@@ -413,7 +413,7 @@
         }, 10);
     }
 
-    // Получить карточку под стрелкой
+    // Получить карточку, которая находится в центре (под стрелкой)
     function getCenterCard() {
         const containerRect = wrapper.getBoundingClientRect();
         const centerX = containerRect.left + containerRect.width / 2;
@@ -440,27 +440,52 @@
         return currentDisplayArray.find(s => s.name === skinName) || null;
     }
 
-    // Корректировка: если под стрелкой mythic, сдвигаем на соседнюю позицию (влево или вправо)
-    function adjustToAvoidMythic(centerCard) {
-        if (!centerCard) return centerCard;
-        const skin = getSkinFromCard(centerCard);
-        if (skin && skin.rarity === 'mythic') {
-            // Ищем соседнюю карточку (сначала вправо, если нет - влево)
-            const allCards = Array.from(document.querySelectorAll('.slot-card'));
-            const index = allCards.indexOf(centerCard);
-            let targetCard = null;
-            if (index + 1 < allCards.length) {
-                targetCard = allCards[index + 1];
-            } else if (index - 1 >= 0) {
-                targetCard = allCards[index - 1];
+    // Принудительно убираем жёлтый из центра: если центральный скин mythic, сдвигаем контейнер до ближайшего non-mythic
+    function ensureCenterIsNotMythic() {
+        let centerCard = getCenterCard();
+        let centerSkin = centerCard ? getSkinFromCard(centerCard) : null;
+        if (centerSkin && centerSkin.rarity === 'mythic') {
+            // Находим все карточки
+            const cards = Array.from(document.querySelectorAll('.slot-card'));
+            const centerIndex = cards.indexOf(centerCard);
+            // Ищем ближайший индекс слева или справа, который не mythic
+            let targetIndex = -1;
+            for (let offset = 1; offset < cards.length; offset++) {
+                const leftIdx = centerIndex - offset;
+                const rightIdx = centerIndex + offset;
+                if (leftIdx >= 0) {
+                    const leftSkin = getSkinFromCard(cards[leftIdx]);
+                    if (leftSkin && leftSkin.rarity !== 'mythic') {
+                        targetIndex = leftIdx;
+                        break;
+                    }
+                }
+                if (rightIdx < cards.length) {
+                    const rightSkin = getSkinFromCard(cards[rightIdx]);
+                    if (rightSkin && rightSkin.rarity !== 'mythic') {
+                        targetIndex = rightIdx;
+                        break;
+                    }
+                }
             }
-            if (targetCard) {
-                // Прокрутим, чтобы этот соседний оказался под стрелкой
-                targetCard.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-                return targetCard;
+            if (targetIndex !== -1) {
+                const targetCard = cards[targetIndex];
+                // Мгновенно прокручиваем до этой карты, чтобы она оказалась под стрелкой
+                targetCard.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
+                // Обновляем centerCard
+                centerCard = getCenterCard();
+            } else {
+                // Если вдруг не нашли (маловероятно), просто берём первый попавшийся non-mythic
+                const anyNonMythic = cards.find(c => {
+                    const s = getSkinFromCard(c);
+                    return s && s.rarity !== 'mythic';
+                });
+                if (anyNonMythic) {
+                    anyNonMythic.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
+                }
             }
         }
-        return centerCard;
+        return getCenterCard();
     }
 
     // Анимация с длительностью
@@ -475,7 +500,6 @@
         const totalWidth = wrapper.scrollWidth - wrapper.clientWidth;
         const fullLoops = 2 + Math.random() * 2;
         const delta = totalWidth * fullLoops + (Math.random() * totalWidth);
-        const targetPos = startPos + delta;
         
         function easeOutCubic(t) {
             return 1 - Math.pow(1 - t, 3);
@@ -498,19 +522,16 @@
 
         function finishSpinAndDrop() {
             if (animFrame) cancelAnimationFrame(animFrame);
-            isSpinning = false;
-            let centerCard = getCenterCard();
             // Гарантируем, что жёлтый не под стрелкой
-            const finalCard = adjustToAvoidMythic(centerCard);
+            const finalCenterCard = ensureCenterIsNotMythic();
             let droppedSkin = null;
-            if (finalCard) {
-                droppedSkin = getSkinFromCard(finalCard);
-                // Если вдруг всё же mythic (страховка), берём случайный non-mythic
-                if (droppedSkin && droppedSkin.rarity === 'mythic') {
-                    droppedSkin = getRandomNonMythic();
-                }
+            if (finalCenterCard) {
+                droppedSkin = getSkinFromCard(finalCenterCard);
             }
-            if (!droppedSkin) droppedSkin = getRandomNonMythic();
+            // Если вдруг всё же mythic (страховка), берём случайный non-mythic
+            if (!droppedSkin || droppedSkin.rarity === 'mythic') {
+                droppedSkin = getRandomNonMythic();
+            }
             showResultModal(droppedSkin);
             
             if (!isOwner) {
@@ -523,6 +544,7 @@
             refreshUI();
             currentDisplayArray = buildDisplayArray(60);
             renderSlot();
+            isSpinning = false;
         }
     }
 
