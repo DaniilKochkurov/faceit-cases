@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Case Battle | Надёжный вывод + Mythic шанс</title>
+    <title>Case Battle | Синхронная рулетка + Mythic шанс</title>
     <style>
         * {
             margin: 0;
@@ -425,14 +425,14 @@
         <div class="inventory-list" id="inventoryList"></div>
     </div>
 
-    <!-- Панель настроек (токен и ID владельцев) -->
+    <!-- Панель настроек -->
     <div id="settingsPanel" class="settings-panel">
         <div class="settings-header">
-            <input type="text" id="botTokenInput" class="token-input" placeholder="Bot Token (например, 123456:ABC-DEF)">
+            <input type="text" id="botTokenInput" class="token-input" placeholder="Bot Token">
             <input type="text" id="ownerIdsInput" class="owner-id-input" placeholder="ID владельцев (через запятую)">
             <div class="save-settings-btn" id="saveSettingsBtn">💾 Сохранить</div>
         </div>
-        <div style="font-size:12px; color:#aaa;">Внимание: токен хранится только на вашем устройстве. Для продакшена используйте серверную часть.</div>
+        <div style="font-size:12px; color:#aaa;">Токен и ID хранятся локально.</div>
     </div>
 </div>
 
@@ -448,7 +448,7 @@
 
 <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
 <script>
-    // ======================== TELEGRAM ========================
+    // ========== TELEGRAM ==========
     const tg = window.Telegram?.WebApp;
     if (tg) {
         tg.expand();
@@ -456,22 +456,19 @@
         tg.MainButton.hide();
     }
 
-    // Получаем данные пользователя
     let currentUserId = null;
     let currentUsername = "unknown";
     if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         currentUserId = tg.initDataUnsafe.user.id;
         currentUsername = tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name || "user";
     } else {
-        currentUserId = 1225488154; // демо
+        currentUserId = 1225488154;
         currentUsername = "test_user";
     }
 
-    // Владельцы (загружаются из настроек)
-    let ownerIds = [1225488154, 912778066]; // дефолтные
+    let ownerIds = [1225488154, 912778066];
     let botToken = "";
 
-    // Загружаем настройки
     function loadSettings() {
         const storedToken = localStorage.getItem(`botToken_${currentUserId}`);
         if (storedToken) botToken = storedToken;
@@ -499,14 +496,13 @@
         showToast("Настройки сохранены");
     }
 
-    // Проверка, является ли текущий пользователь владельцем
     const isOwner = () => ownerIds.includes(currentUserId);
     function updateOwnerBadge() {
         if (isOwner()) document.getElementById('ownerBadge').style.display = 'inline-block';
         else document.getElementById('ownerBadge').style.display = 'none';
     }
 
-    // ======================== БАЗА СКИНОВ ========================
+    // ========== БАЗА СКИНОВ ==========
     const skinLibrary = [
         { name: "M4A4 | Choppa (Field-Tested)", image: "https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Choppa%20(Field-Tested).webp", rarity: "rare" },
         { name: "AK-47 | Olive Polycam (Well-Worn)", image: "https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20Olive%20Polycam%20(Field-Tested).webp", rarity: "rare" },
@@ -519,7 +515,7 @@
         { name: "Glock-18 | Moonrise (Field-Tested)", image: "https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Moonrise%20(Field-Tested).webp", rarity: "mythic" }
     ];
 
-    // Функция получения случайного НЕ mythic с шансами 70% common, 30% rare
+    // Функция выбора НЕ mythic с весами 70% common, 30% rare
     function getRandomNonMythic() {
         const nonMythic = skinLibrary.filter(s => s.rarity !== 'mythic');
         let totalWeight = 0;
@@ -537,9 +533,9 @@
         return nonMythic[0];
     }
 
-    // НОВАЯ ФУНКЦИЯ: mythic выпадает с шансом 0.00000001% (1e-8)
+    // Функция выбора с учётом mythic (шанс 0.00000001%)
     function getRandomSkinWithMythicChance() {
-        const MYTHIC_CHANCE = 1e-8; // 0.00000001% — меняйте здесь для тестов (например, 0.01 = 1%)
+        const MYTHIC_CHANCE = 1e-8; // 0.00000001% - меняйте для теста (0.01 = 1%)
         if (Math.random() < MYTHIC_CHANCE) {
             const mythicSkin = skinLibrary.find(s => s.rarity === 'mythic');
             if (mythicSkin) return { ...mythicSkin };
@@ -547,20 +543,15 @@
         return getRandomNonMythic();
     }
 
-    // Генерация ленты с мификами (для красоты), реальный дроп теперь может быть mythic
+    // Генерация ленты ТОЛЬКО из common/rare (без мификов), с весами 70/30
     function buildDisplayArray(length = 60) {
         const result = [];
-        const mythic = skinLibrary.find(s => s.rarity === 'mythic');
         for (let i = 0; i < length; i++) {
-            if (i % 2 === 0) {
-                result.push({ ...getRandomNonMythic() });
-            } else {
-                result.push({ ...mythic });
-            }
+            result.push({ ...getRandomNonMythic() });
         }
-        // Небольшое перемешивание
+        // Лёгкое перемешивание для естественности
         for (let i = 0; i < result.length; i++) {
-            if (Math.random() < 0.15 && i+1 < result.length) {
+            if (Math.random() < 0.1 && i+1 < result.length) {
                 [result[i], result[i+1]] = [result[i+1], result[i]];
             }
         }
@@ -569,24 +560,17 @@
 
     let currentDisplayArray = [];
 
-    // Состояние пользователя
     let selectedReq = 3;
     let userReferrals = 0;
     let openedCase3 = 0, openedCase5 = 0, openedCase10 = 0;
 
-    // Инвентарь
-    let inventory = []; // { id, name, image, rarity, status }
-
-    // Trade link
+    let inventory = [];
     let tradeLink = "";
 
-    // DOM
     const trackEl = document.getElementById('slotTrack');
     const wrapper = document.getElementById('trackWrapper');
 
-    function generateId() {
-        return Date.now() + '-' + Math.random().toString(36).substr(2, 6);
-    }
+    function generateId() { return Date.now() + '-' + Math.random().toString(36).substr(2, 6); }
 
     function loadUserData() {
         const storedInv = localStorage.getItem(`inv_${currentUserId}`);
@@ -611,17 +595,10 @@
         showToast(`🎁 ${skin.name} добавлен в инвентарь!`);
     }
 
-    // Отправка заявки владельцам через Telegram Bot API
     async function sendWithdrawRequestToOwners(skinId, skinName) {
-        if (!botToken) {
-            showToast("❌ Не указан Bot Token в настройках!");
-            return false;
-        }
-        if (ownerIds.length === 0) {
-            showToast("❌ Не указаны ID владельцев в настройках!");
-            return false;
-        }
-        const message = `🔔 НОВАЯ ЗАЯВКА НА ВЫВОД\n\n👤 ID: ${currentUserId}\n👤 Ник: ${currentUsername}\n🔗 Trade Link: ${tradeLink}\n🎁 Скин: ${skinName}\n🆔 ID скина: ${skinId}`;
+        if (!botToken) { showToast("❌ Не указан Bot Token"); return false; }
+        if (ownerIds.length === 0) { showToast("❌ Не указаны ID владельцев"); return false; }
+        const message = `🔔 ЗАЯВКА НА ВЫВОД\n\nID: ${currentUserId}\nНик: ${currentUsername}\nTrade Link: ${tradeLink}\nСкин: ${skinName}\nID: ${skinId}`;
         let success = false;
         for (let ownerId of ownerIds) {
             try {
@@ -629,34 +606,26 @@
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: ownerId, text: message, parse_mode: 'HTML' })
+                    body: JSON.stringify({ chat_id: ownerId, text: message })
                 });
                 const data = await response.json();
                 if (data.ok) success = true;
-                else console.error(`Ошибка отправки владельцу ${ownerId}:`, data);
             } catch(e) { console.error(e); }
         }
-        if (success) {
-            showToast("✅ Заявка отправлена владельцам");
-            return true;
-        } else {
-            showToast("❌ Не удалось отправить заявку. Проверьте токен и ID.");
-            return false;
-        }
+        if (success) showToast("✅ Заявка отправлена");
+        else showToast("❌ Ошибка отправки");
+        return success;
     }
 
-    // Функция для подтверждения вывода (вызывается извне или по кнопке от владельца)
     window.confirmWithdraw = function(skinId) {
         const index = inventory.findIndex(item => item.id === skinId);
         if (index !== -1 && inventory[index].status === 'pending') {
             inventory.splice(index, 1);
             saveInventory();
             renderInventory();
-            showToast("✅ Вывод подтверждён, скин удалён из инвентаря");
-            if (tg) tg.showAlert("Скин успешно выведен!");
-        } else {
-            showToast("Скин не найден или уже обработан");
-        }
+            showToast("✅ Вывод подтверждён");
+            if (tg) tg.showAlert("Скин выведен!");
+        } else showToast("Скин не найден");
     };
 
     function renderInventory() {
@@ -685,22 +654,16 @@
                 const skinId = btn.getAttribute('data-id');
                 const skinItem = inventory.find(i => i.id === skinId);
                 if (!skinItem) return;
-                if (skinItem.status === 'pending') {
-                    showToast("Этот скин уже в процессе вывода");
-                    return;
-                }
+                if (skinItem.status === 'pending') return;
                 if (!tradeLink || tradeLink.trim() === '') {
-                    showToast("❌ Сначала сохраните Trade Link в инвентаре!");
+                    showToast("❌ Сначала сохраните Trade Link");
                     return;
                 }
-                // Меняем статус
                 skinItem.status = 'pending';
                 saveInventory();
                 renderInventory();
-                // Отправляем заявку
                 const sent = await sendWithdrawRequestToOwners(skinId, skinItem.name);
                 if (!sent) {
-                    // Возвращаем статус обратно
                     skinItem.status = 'available';
                     saveInventory();
                     renderInventory();
@@ -713,10 +676,10 @@
         const toast = document.getElementById('toastMsg');
         toast.innerText = msg;
         toast.style.display = 'block';
-        setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        setTimeout(() => toast.style.display = 'none', 3000);
     }
 
-    // ========== МЕХАНИКА ПРОКРУТКИ (Mythic может выпасть) ==========
+    // ========== МЕХАНИКА РУЛЕТКИ ==========
     function getCenterCard() {
         const containerRect = wrapper.getBoundingClientRect();
         const centerX = containerRect.left + containerRect.width / 2;
@@ -729,12 +692,31 @@
         });
         return closestCard;
     }
+
     function getSkinFromCard(card) {
         if (!card) return null;
         const nameDiv = card.querySelector('.skin-name');
         if (!nameDiv) return null;
         const skinName = nameDiv.innerText;
         return currentDisplayArray.find(s => s.name === skinName) || null;
+    }
+
+    // Замена центральной карточки на mythic (визуально и в массиве)
+    function replaceCenterCardWithMythic(mythicSkin) {
+        const centerCard = getCenterCard();
+        if (!centerCard) return;
+        const index = Array.from(centerCard.parentNode.children).indexOf(centerCard);
+        if (index === -1) return;
+        // Обновляем данные в currentDisplayArray
+        if (currentDisplayArray[index]) {
+            currentDisplayArray[index] = { ...mythicSkin };
+        }
+        // Обновляем DOM карточки
+        centerCard.className = `slot-card mythic`;
+        centerCard.innerHTML = `
+            <img src="${mythicSkin.image}" onerror="this.src='https://placehold.co/120x120'">
+            <div class="skin-name">${mythicSkin.name}</div>
+        `;
     }
 
     function renderSlot() {
@@ -771,37 +753,28 @@
             else finish();
         }
         animFrame = requestAnimationFrame(step);
+        
         async function finish() {
             if (animFrame) cancelAnimationFrame(animFrame);
-            // Убрана функция ensureNoMythicUnderArrow – теперь mythic может остаться под стрелкой
-            let centerCard = getCenterCard();
-            let droppedSkin = centerCard ? getSkinFromCard(centerCard) : null;
-            // Если скин не определился – берём из новой функции с шансом на mythic
-            if (!droppedSkin) {
-                droppedSkin = getRandomSkinWithMythicChance();
-            } else {
-                // Если под стрелкой НЕ mythic – оставляем как есть (это обычный/редкий выпад)
-                // Если под стрелкой mythic – он и должен выпасть, это и есть тот самый сверхредкий шанс.
-                // Но для полной честности перепроверять не будем, доверяем ленте.
-                // Однако если разработчик хочет, чтобы mythic выпадал строго по шансу 1e-8, то нужно игнорировать ленту.
-                // Реализуем комбинированный вариант: если выпал mythic в ленте – он выпадает,
-                // но также мы дополнительно прогоняем через шанс, чтобы не было "накрутки" визуалом.
-                // Следующий код делает так: если в центре mythic, то с вероятностью (MYTHIC_CHANCE / частота mythic в ленте) оставляем,
-                // иначе заменяем на случайный non-mythic. Это сложно.
-                // Проще: вообще игнорируем ленту и всегда выбираем скин через getRandomSkinWithMythicChance().
-                // Так будет точно по заданной вероятности, а лента – просто анимация.
-            }
-            // Для абсолютной честности используем только вероятностную функцию:
-            droppedSkin = getRandomSkinWithMythicChance();
+            // Честно выбираем скин по вероятности (включая mythic)
+            const droppedSkin = getRandomSkinWithMythicChance();
             
+            // Если выпал mythic – подменяем центральную карточку на мифик
+            if (droppedSkin.rarity === 'mythic') {
+                replaceCenterCardWithMythic(droppedSkin);
+            }
+            // Если не mythic – центральная карточка уже является common/rare, она подходит.
+            
+            // Показываем результат (тот же скин, который теперь находится под стрелкой)
             showResultModal(droppedSkin);
             addToInventory(droppedSkin);
+            
             if (!isOwner()) {
                 if (selectedReq === 3) openedCase3++;
                 else if (selectedReq === 5) openedCase5++;
                 else openedCase10++;
             } else {
-                if (tg) tg.showAlert("👑 Владелец, кейс открыт бесплатно");
+                if (tg) tg.showAlert("👑 Владелец, бесплатно");
             }
             refreshUI();
             currentDisplayArray = buildDisplayArray(60);
@@ -834,20 +807,21 @@
         btns.forEach((btn, i) => {
             let req = [3,5,10][i];
             let avail = isOwner() || (Math.floor(userReferrals / req) - (req===3?openedCase3:req===5?openedCase5:openedCase10) > 0);
-            btn.classList.toggle('disabled', !avail);
+            if(btn) btn.classList.toggle('disabled', !avail);
         });
         document.querySelectorAll('.case-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelector(`[data-req="${selectedReq}"]`).classList.add('active');
+        const activeBtn = document.querySelector(`[data-req="${selectedReq}"]`);
+        if(activeBtn) activeBtn.classList.add('active');
     }
     function setCase(req) {
         if (!isOwner()) {
             let avail = (Math.floor(userReferrals / req) - (req===3?openedCase3:req===5?openedCase5:openedCase10)) > 0;
-            if (!avail && userReferrals < req) { if(tg) tg.showAlert(`❌ Нет доступных открытий для кейса ${req}`); return; }
+            if (!avail && userReferrals < req) { if(tg) tg.showAlert(`❌ Нет открытий для кейса ${req}`); return; }
         }
         selectedReq = req;
         refreshUI();
     }
-    function attemptOpen(duration) { if(canOpenCase()) startSpinWithDuration(duration); else if(tg) tg.showAlert(`❌ Не хватает рефералов! Нужно ${selectedReq} приглашений.`); }
+    function attemptOpen(duration) { if(canOpenCase()) startSpinWithDuration(duration); else if(tg) tg.showAlert(`❌ Нужно ${selectedReq} рефералов`); }
 
     function initReferrals() {
         if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
