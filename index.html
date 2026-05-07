@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Case Battle | Две скорости</title>
+    <title>Case Battle | Жёлтый только рядом</title>
     <style>
         * {
             margin: 0;
@@ -325,7 +325,7 @@
     if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         currentUserId = tg.initDataUnsafe.user.id;
     } else {
-        currentUserId = 1225488154; // для теста
+        currentUserId = 1225488154;
     }
     const isOwner = OWNER_IDS.includes(currentUserId);
     if (isOwner) {
@@ -363,33 +363,26 @@
         return nonMythic[0];
     }
 
-    // Генерация ленты: чередуем non-mythic и mythic, чтобы желтый был рядом с каждым обычным/редким
-    // Для надёжности: создаём массив, где после каждого non-mythic идёт mythic (или наоборот)
+    // Генерация ленты: жёлтые вставляем через одного, чтобы они были рядом, но не под стрелкой
     function buildDisplayArray(length = 60) {
         const result = [];
         const mythic = skinLibrary.find(s => s.rarity === 'mythic');
         for (let i = 0; i < length; i++) {
             if (i % 2 === 0) {
-                // чётный индекс – обычный/редкий
-                const normal = getRandomNonMythic();
-                result.push({ ...normal });
+                result.push({ ...getRandomNonMythic() });
             } else {
-                // нечётный – жёлтый мифик
                 result.push({ ...mythic });
             }
         }
-        // небольшое перемешивание, но сохраняя соседство (чтобы не все идеально чередовались)
+        // Небольшое случайное перемешивание, но сохраняем соседство
         for (let i = 0; i < result.length; i++) {
-            if (Math.random() < 0.2 && i+1 < result.length) {
-                let temp = result[i];
-                result[i] = result[i+1];
-                result[i+1] = temp;
+            if (Math.random() < 0.15 && i+1 < result.length) {
+                [result[i], result[i+1]] = [result[i+1], result[i]];
             }
         }
         return result;
     }
 
-    // Текущий массив отображения
     let currentDisplayArray = [];
 
     // Состояние пользователя
@@ -415,7 +408,6 @@
             `;
             trackEl.appendChild(card);
         });
-        // центрируем
         setTimeout(() => {
             wrapper.scrollLeft = (wrapper.scrollWidth - wrapper.clientWidth) / 2;
         }, 10);
@@ -448,27 +440,43 @@
         return currentDisplayArray.find(s => s.name === skinName) || null;
     }
 
-    // Анимация прокрутки с заданной длительностью (мс)
+    // Корректировка: если под стрелкой mythic, сдвигаем на соседнюю позицию (влево или вправо)
+    function adjustToAvoidMythic(centerCard) {
+        if (!centerCard) return centerCard;
+        const skin = getSkinFromCard(centerCard);
+        if (skin && skin.rarity === 'mythic') {
+            // Ищем соседнюю карточку (сначала вправо, если нет - влево)
+            const allCards = Array.from(document.querySelectorAll('.slot-card'));
+            const index = allCards.indexOf(centerCard);
+            let targetCard = null;
+            if (index + 1 < allCards.length) {
+                targetCard = allCards[index + 1];
+            } else if (index - 1 >= 0) {
+                targetCard = allCards[index - 1];
+            }
+            if (targetCard) {
+                // Прокрутим, чтобы этот соседний оказался под стрелкой
+                targetCard.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                return targetCard;
+            }
+        }
+        return centerCard;
+    }
+
+    // Анимация с длительностью
     let isSpinning = false;
     let animFrame = null;
 
     function startSpinWithDuration(durationMs) {
         if (isSpinning) return;
         isSpinning = true;
-        // начальное смещение
-        let startScroll = wrapper.scrollLeft;
-        // Начальная скорость подбирается так, чтобы за durationMs прокрутка остановилась
-        // Используем экспоненциальное затухание: speed = initialSpeed * friction^t
-        // Общий путь = initialSpeed * (1 - friction^(durationMs/16)) / (1-friction)
-        // Но проще сделать анимацию на основе времени с easing
         const startTime = performance.now();
         const startPos = wrapper.scrollLeft;
-        // Целевой сдвиг: пролистаем на несколько полных длин ленты + случайный остаток
         const totalWidth = wrapper.scrollWidth - wrapper.clientWidth;
-        const fullLoops = 2 + Math.random() * 2; // 2-4 полных прокрутки
+        const fullLoops = 2 + Math.random() * 2;
         const delta = totalWidth * fullLoops + (Math.random() * totalWidth);
         const targetPos = startPos + delta;
-        // используем easeOutCubic для плавной остановки именно за durationMs
+        
         function easeOutCubic(t) {
             return 1 - Math.pow(1 - t, 3);
         }
@@ -477,14 +485,12 @@
             let t = Math.min(1, elapsed / durationMs);
             const ease = easeOutCubic(t);
             const newPos = startPos + delta * ease;
-            // Ограничиваем и делаем "бесконечную" прокрутку через модуль
             let limited = newPos % totalWidth;
             if (limited < 0) limited += totalWidth;
             wrapper.scrollLeft = limited;
             if (t < 1) {
                 animFrame = requestAnimationFrame(step);
             } else {
-                // анимация завершена
                 finishSpinAndDrop();
             }
         }
@@ -493,34 +499,28 @@
         function finishSpinAndDrop() {
             if (animFrame) cancelAnimationFrame(animFrame);
             isSpinning = false;
-            const centerCard = getCenterCard();
+            let centerCard = getCenterCard();
+            // Гарантируем, что жёлтый не под стрелкой
+            const finalCard = adjustToAvoidMythic(centerCard);
             let droppedSkin = null;
-            let isBait = false;
-            if (centerCard) {
-                const skinUnder = getSkinFromCard(centerCard);
-                if (skinUnder && skinUnder.rarity === 'mythic') {
-                    droppedSkin = getRandomNonMythic();
-                    isBait = true;
-                    if (tg) tg.HapticFeedback?.notificationOccurred('warning');
-                } else if (skinUnder) {
-                    droppedSkin = skinUnder;
-                } else {
+            if (finalCard) {
+                droppedSkin = getSkinFromCard(finalCard);
+                // Если вдруг всё же mythic (страховка), берём случайный non-mythic
+                if (droppedSkin && droppedSkin.rarity === 'mythic') {
                     droppedSkin = getRandomNonMythic();
                 }
-            } else {
-                droppedSkin = getRandomNonMythic();
             }
+            if (!droppedSkin) droppedSkin = getRandomNonMythic();
             showResultModal(droppedSkin);
-            // Списание открытия, если не владелец
+            
             if (!isOwner) {
                 if (selectedReq === 3) openedCase3++;
                 else if (selectedReq === 5) openedCase5++;
-                else if (selectedReq === 10) openedCase10++;
+                else openedCase10++;
             } else {
                 if (tg) tg.showAlert("👑 Владелец, кейс открыт бесплатно");
             }
             refreshUI();
-            // Обновляем ленту для следующего раза
             currentDisplayArray = buildDisplayArray(60);
             renderSlot();
         }
@@ -536,7 +536,6 @@
         if (tg) tg.HapticFeedback?.notificationOccurred('success');
     }
 
-    // Проверка доступности
     function canOpenCase() {
         if (isOwner) return true;
         let available = 0;
@@ -598,7 +597,6 @@
         startSpinWithDuration(durationMs);
     }
 
-    // Инициализация рефералов
     function initReferrals() {
         if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
             let val = parseInt(tg.initDataUnsafe.start_param);
@@ -610,7 +608,6 @@
         refreshUI();
     }
 
-    // События
     document.getElementById('slowOpenBtn').addEventListener('click', () => attemptOpen(5000));
     document.getElementById('fastOpenBtn').addEventListener('click', () => attemptOpen(1200));
     document.querySelectorAll('.case-btn').forEach(btn => {
@@ -628,7 +625,6 @@
         }
     });
 
-    // Старт
     currentDisplayArray = buildDisplayArray(60);
     renderSlot();
     initReferrals();
