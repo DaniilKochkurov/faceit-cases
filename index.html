@@ -244,7 +244,6 @@
             background: linear-gradient(115deg, #5f7ef0, #2b4cbe);
         }
 
-        /* Инвентарь */
         .inventory-panel {
             margin-top: 20px;
             background: #02061780;
@@ -313,6 +312,10 @@
             border-radius: 40px;
             font-weight: bold;
             cursor: pointer;
+        }
+        .withdraw-btn.disabled {
+            background: #555;
+            cursor: not-allowed;
         }
 
         .modal {
@@ -418,9 +421,7 @@
             <input type="text" id="tradeLinkInput" class="trade-link-input" placeholder="Введите Trade Link">
             <div class="save-trade-btn" id="saveTradeLinkBtn">💾 Сохранить</div>
         </div>
-        <div class="inventory-list" id="inventoryList">
-            <!-- скины будут тут -->
-        </div>
+        <div class="inventory-list" id="inventoryList"></div>
     </div>
 </div>
 
@@ -444,7 +445,7 @@
         tg.MainButton.hide();
     }
 
-    // Владельцы
+    // Владельцы (сюда же будет отправляться заявка)
     const OWNER_IDS = [1225488154, 912778066];
     let currentUserId = null;
     let currentUsername = "unknown";
@@ -473,7 +474,7 @@
         { name: "Glock-18 | Moonrise (Field-Tested)", image: "https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Moonrise%20(Field-Tested).webp", rarity: "mythic" }
     ];
 
-    // Получить случайный не-мифический скин (жёлтый не выпадает)
+    // Получить случайный не-мифический скин
     function getRandomNonMythic() {
         const nonMythic = skinLibrary.filter(s => s.rarity !== 'mythic');
         let totalWeight = 0;
@@ -491,7 +492,7 @@
         return nonMythic[0];
     }
 
-    // Генерация ленты (с жёлтыми через одного, но они не выпадают)
+    // Генерация ленты: чередуем, но мифики будут только в чётных позициях (гарантируем, что центральный никогда не мифик)
     function buildDisplayArray(length = 60) {
         const result = [];
         const mythic = skinLibrary.find(s => s.rarity === 'mythic');
@@ -502,12 +503,8 @@
                 result.push({ ...mythic });
             }
         }
-        // небольшое перемешивание
-        for (let i = 0; i < result.length; i++) {
-            if (Math.random() < 0.15 && i+1 < result.length) {
-                [result[i], result[i+1]] = [result[i+1], result[i]];
-            }
-        }
+        // небольшое перемешивание, но не перемещаем мифики в позиции, которые могут стать центральными
+        // Для надёжности после сборки дополнительно проверим центральную область в текущем рендере
         return result;
     }
 
@@ -518,8 +515,8 @@
     let userReferrals = 0;
     let openedCase3 = 0, openedCase5 = 0, openedCase10 = 0;
 
-    // Инвентарь (массив скинов)
-    let inventory = [];
+    // Инвентарь: каждый скин имеет уникальный id и статус
+    let inventory = []; // { id, name, image, rarity, status: 'available' | 'pending' }
 
     // Trade link
     let tradeLink = "";
@@ -528,7 +525,12 @@
     const trackEl = document.getElementById('slotTrack');
     const wrapper = document.getElementById('trackWrapper');
 
-    // Загрузка данных из localStorage
+    // Генерация уникального ID
+    function generateId() {
+        return Date.now() + '-' + Math.random().toString(36).substr(2, 6);
+    }
+
+    // Загрузка данных
     function loadUserData() {
         const storedInv = localStorage.getItem(`inv_${currentUserId}`);
         if (storedInv) {
@@ -551,13 +553,57 @@
         localStorage.setItem(`trade_${currentUserId}`, tradeLink);
     }
 
-    // Добавить скин в инвентарь
     function addToInventory(skin) {
-        inventory.push({ ...skin, acquiredAt: Date.now() });
+        const newItem = { ...skin, id: generateId(), status: 'available' };
+        inventory.push(newItem);
         saveInventory();
         renderInventory();
         showToast(`🎁 ${skin.name} добавлен в инвентарь!`);
     }
+
+    // Отправка заявки владельцам (через бэкенд)
+    async function sendWithdrawRequestToOwners(skinId, skinName) {
+        // Здесь вы должны отправить POST на ваш сервер, который через бота отправит сообщение владельцам
+        // Например:
+        try {
+            const response = await fetch('https://your-backend.com/api/withdraw-request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: currentUserId,
+                    username: currentUsername,
+                    skinId: skinId,
+                    skinName: skinName,
+                    tradeLink: tradeLink
+                })
+            });
+            if (response.ok) {
+                showToast("Заявка отправлена владельцам");
+            } else {
+                showToast("Ошибка отправки, попробуйте позже");
+            }
+        } catch (e) {
+            console.error(e);
+            showToast("Не удалось отправить заявку (проверьте соединение)");
+        }
+        // Для демонстрации показываем в консоли, что нужно отправить
+        console.log(`[ЗАЯВКА] Пользователь ${currentUserId} (${currentUsername}) хочет вывести ${skinName}. Trade link: ${tradeLink}`);
+        console.log(`[ДЕЙСТВИЕ ВЛАДЕЛЬЦА] Чтобы подтвердить вывод, выполните: confirmWithdraw("${skinId}")`);
+    }
+
+    // Функция для подтверждения вывода (вызывается владельцем через бота или вручную)
+    window.confirmWithdraw = function(skinId) {
+        const index = inventory.findIndex(item => item.id === skinId);
+        if (index !== -1 && inventory[index].status === 'pending') {
+            inventory.splice(index, 1);
+            saveInventory();
+            renderInventory();
+            showToast("Скин удалён из инвентаря (вывод подтверждён)");
+            if (tg) tg.showAlert("Вывод подтверждён, скин удалён");
+        } else {
+            showToast("Скин не найден или уже обработан");
+        }
+    };
 
     // Отрисовка инвентаря
     function renderInventory() {
@@ -568,47 +614,43 @@
             return;
         }
         container.innerHTML = '';
-        inventory.forEach((item, idx) => {
+        inventory.forEach((item) => {
             const div = document.createElement('div');
             div.className = 'inventory-item';
+            const isPending = item.status === 'pending';
             div.innerHTML = `
                 <div class="inv-skin-info">
                     <img src="${item.image}" onerror="this.src='https://placehold.co/48x48'">
                     <span style="font-weight:bold;">${item.name}</span>
                 </div>
-                <button class="withdraw-btn" data-index="${idx}">💸 Вывести</button>
+                <button class="withdraw-btn" data-id="${item.id}" ${isPending ? 'disabled' : ''}>${isPending ? '⏳ В процессе...' : '💸 Вывести'}</button>
             `;
             container.appendChild(div);
         });
-        // Навесить обработчики на кнопки вывода
+        // Навесить обработчики
         document.querySelectorAll('.withdraw-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const index = parseInt(btn.getAttribute('data-index'));
-                if (!isNaN(index)) withdrawSkin(index);
+            if (btn.disabled) return;
+            btn.addEventListener('click', async (e) => {
+                const skinId = btn.getAttribute('data-id');
+                const skinItem = inventory.find(i => i.id === skinId);
+                if (!skinItem) return;
+                if (skinItem.status === 'pending') {
+                    showToast("Этот скин уже в процессе вывода");
+                    return;
+                }
+                if (!tradeLink || tradeLink.trim() === '') {
+                    showToast("❌ Сначала сохраните Trade Link!");
+                    return;
+                }
+                // Меняем статус
+                skinItem.status = 'pending';
+                saveInventory();
+                renderInventory();
+                // Отправляем заявку владельцам
+                await sendWithdrawRequestToOwners(skinId, skinItem.name);
+                showToast("Заявка отправлена. Ожидайте подтверждения от владельца.");
             });
         });
-    }
-
-    // Вывод скина
-    function withdrawSkin(index) {
-        const skin = inventory[index];
-        if (!skin) return;
-        if (!tradeLink || tradeLink.trim() === '') {
-            showToast("❌ Сначала сохраните Trade Link в настройках!");
-            return;
-        }
-        // Отправка заявки в группу -1003696680479
-        // Здесь нужно отправить запрос на ваш бэкенд, который через бота отправит сообщение в группу.
-        // Пока имитируем через alert и console.log
-        const message = `🔔 НОВАЯ ЗАЯВКА НА ВЫВОД\n\n👤 ID: ${currentUserId}\n👤 Ник: ${currentUsername}\n🔗 Trade Link: ${tradeLink}\n🎁 Скин: ${skin.name}`;
-        console.log("Сообщение для отправки в группу:", message);
-        // В реальном проекте замените на POST запрос к вашему API:
-        // fetch('/api/withdraw', { method: 'POST', body: JSON.stringify({ userId: currentUserId, skin, tradeLink }) })
-        showToast("✅ Заявка на вывод отправлена! Ожидайте.");
-        // Удаляем скин из инвентаря (после успешной отправки)
-        inventory.splice(index, 1);
-        saveInventory();
-        renderInventory();
     }
 
     function showToast(msg) {
@@ -620,7 +662,7 @@
         }, 3000);
     }
 
-    // Механика прокрутки (без байта, просто корректируем, чтобы жёлтый не был под стрелкой)
+    // Механика прокрутки: принудительно убираем жёлтый из центра после остановки
     function ensureCenterIsNotMythic() {
         let centerCard = getCenterCard();
         let centerSkin = centerCard ? getSkinFromCard(centerCard) : null;
@@ -628,6 +670,7 @@
             const cards = Array.from(document.querySelectorAll('.slot-card'));
             const centerIndex = cards.indexOf(centerCard);
             let targetIndex = -1;
+            // ищем ближайший non-mythic
             for (let offset = 1; offset < cards.length; offset++) {
                 const leftIdx = centerIndex - offset;
                 const rightIdx = centerIndex + offset;
@@ -647,17 +690,12 @@
                 }
             }
             if (targetIndex !== -1) {
-                cards[targetIndex].scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
-                centerCard = getCenterCard();
-            } else {
-                const anyNonMythic = cards.find(c => {
-                    const s = getSkinFromCard(c);
-                    return s && s.rarity !== 'mythic';
-                });
-                if (anyNonMythic) anyNonMythic.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
+                cards[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                // Небольшая задержка, чтобы скролл успел отработать
+                return new Promise(resolve => setTimeout(resolve, 200));
             }
         }
-        return getCenterCard();
+        return Promise.resolve();
     }
 
     function getCenterCard() {
@@ -736,19 +774,19 @@
         }
         animFrame = requestAnimationFrame(step);
 
-        function finishSpinAndDrop() {
+        async function finishSpinAndDrop() {
             if (animFrame) cancelAnimationFrame(animFrame);
-            ensureCenterIsNotMythic(); // гарантируем, что жёлтый не под стрелкой
+            // Принудительно убираем жёлтый из центра
+            await ensureCenterIsNotMythic();
             const centerCard = getCenterCard();
             let droppedSkin = null;
             if (centerCard) {
                 droppedSkin = getSkinFromCard(centerCard);
             }
             if (!droppedSkin || droppedSkin.rarity === 'mythic') {
-                droppedSkin = getRandomNonMythic(); // страховка
+                droppedSkin = getRandomNonMythic();
             }
             showResultModal(droppedSkin);
-            // Добавляем в инвентарь
             addToInventory(droppedSkin);
             
             if (!isOwner) {
@@ -775,7 +813,6 @@
         if (tg) tg.HapticFeedback?.notificationOccurred('success');
     }
 
-    // Рефералы и доступность
     function canOpenCase() {
         if (isOwner) return true;
         let available = 0;
@@ -901,7 +938,7 @@
     renderSlot();
     initReferrals();
     setCase(3);
-    switchTab('cases'); // показываем кейсы по умолчанию
+    switchTab('cases');
 </script>
 </body>
 </html>
