@@ -34,7 +34,6 @@
             box-shadow: 0 25px 40px -12px black;
         }
 
-        /* Верхняя панель */
         .stats {
             display: flex;
             justify-content: space-between;
@@ -72,7 +71,6 @@
             font-weight: bold;
         }
 
-        /* Кейсы */
         .case-tabs {
             display: flex;
             gap: 14px;
@@ -103,7 +101,6 @@
             filter: grayscale(0.2);
         }
 
-        /* Блок рулетки со стрелкой */
         .slot-container {
             position: relative;
             margin: 30px 0 20px;
@@ -128,6 +125,7 @@
             flex-wrap: nowrap;
             gap: 18px;
             padding: 12px 8px;
+            will-change: scroll-position;
         }
         .slot-card {
             flex: 0 0 auto;
@@ -140,7 +138,6 @@
             transition: 0.1s;
             border: 1px solid rgba(255,210,150,0.2);
         }
-        /* Редкость фона */
         .slot-card.common { background: #19213a; }
         .slot-card.rare {
             background: linear-gradient(145deg, #601f1f, #8b2e2e);
@@ -169,7 +166,6 @@
             color: white;
         }
 
-        /* СТРЕЛКА (индикатор) */
         .arrow-indicator {
             position: absolute;
             top: -20px;
@@ -200,7 +196,6 @@
             box-shadow: 0 0 8px gold;
         }
 
-        /* Кнопка открытия */
         .open-btn {
             background: linear-gradient(115deg, #ffb347, #ff6324);
             width: 92%;
@@ -220,7 +215,6 @@
             transform: scale(0.97);
         }
 
-        /* Модалка результата */
         .modal {
             position: fixed;
             top: 0;
@@ -284,7 +278,6 @@
         <div data-req="10" class="case-btn">🔥 КЕЙС 10</div>
     </div>
 
-    <!-- Рулетка со стрелкой -->
     <div class="slot-container">
         <div class="arrow-indicator"><span>▼</span></div>
         <div class="center-line"></div>
@@ -307,7 +300,7 @@
 
 <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
 <script>
-    // ---------- Telegram ----------
+    // ======================== TELEGRAM ========================
     const tg = window.Telegram?.WebApp;
     if (tg) {
         tg.expand();
@@ -315,21 +308,20 @@
         tg.MainButton.hide();
     }
 
-    // ID владельцев (вы и второй пользователь)
+    // Владельцы (вы и второй пользователь)
     const OWNER_IDS = [1225488154, 912778066];
     let currentUserId = null;
     if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         currentUserId = tg.initDataUnsafe.user.id;
     } else {
-        // Демо-режим для теста в браузере (можно владельцем)
-        currentUserId = 1225488154;
+        currentUserId = 1225488154; // для теста в браузере
     }
     const isOwner = OWNER_IDS.includes(currentUserId);
     if (isOwner) {
         document.getElementById('ownerBadge').style.display = 'inline-block';
     }
 
-    // ---------- БАЗА СКИНОВ (оригиналы) ----------
+    // ======================== БАЗА СКИНОВ ========================
     const skinLibrary = [
         { name: "M4A4 | Choppa (Field-Tested)", image: "https://cdn2.csgo.com/item/image/width=916/M4A4%20%7C%20Choppa%20(Field-Tested).webp", rarity: "rare" },
         { name: "AK-47 | Olive Polycam (Well-Worn)", image: "https://cdn2.csgo.com/item/image/width=916/AK-47%20%7C%20Olive%20Polycam%20(Field-Tested).webp", rarity: "rare" },
@@ -342,59 +334,61 @@
         { name: "Glock-18 | Moonrise (Field-Tested)", image: "https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Moonrise%20(Field-Tested).webp", rarity: "mythic" }
     ];
 
-    // Формируем расширенный массив с учётом весов (70% common, 30% rare, mythic исключаем из выпадения)
-    function buildWeightedList() {
-        let pool = [];
-        // исключаем mythic
-        const available = skinLibrary.filter(s => s.rarity !== 'mythic');
-        for (let s of available) {
-            let copies = (s.rarity === 'rare') ? 30 : 70;
-            for (let i = 0; i < copies; i++) {
-                pool.push({ ...s }); // копия
+    // ========== ФУНКЦИЯ ДЛЯ ВЫБОРА СЛУЧАЙНОГО НЕ-МИФИЧЕСКОГО СКИНА (с весами 70% common, 30% rare) ==========
+    function getRandomNonMythic() {
+        const nonMythic = skinLibrary.filter(s => s.rarity !== 'mythic');
+        // собираем веса: common = 70, rare = 30
+        let totalWeight = 0;
+        const weighted = nonMythic.map(s => {
+            let w = (s.rarity === 'rare') ? 30 : 70;
+            totalWeight += w;
+            return { skin: s, weight: w };
+        });
+        let rand = Math.random() * totalWeight;
+        let acc = 0;
+        for (let item of weighted) {
+            acc += item.weight;
+            if (rand <= acc) return item.skin;
+        }
+        return nonMythic[0];
+    }
+
+    // ========== ФОРМИРОВАНИЕ МАССИВА ДЛЯ ОТОБРАЖЕНИЯ ==========
+    // Включаем мифический скин (жёлтый) часто, чтобы стрелка часто на него указывала.
+    // Каждый третий слот – жёлтый, остальные – случайные non-mythic с весами 70/30.
+    function buildDisplayArray(length = 90) {
+        const result = [];
+        for (let i = 0; i < length; i++) {
+            if (Math.random() < 0.33) { // 33% шанс, что слот будет жёлтым
+                const mythic = skinLibrary.find(s => s.rarity === 'mythic');
+                result.push({ ...mythic });
+            } else {
+                const randomSkin = getRandomNonMythic();
+                result.push({ ...randomSkin });
             }
         }
-        // перемешиваем
-        for (let i = pool.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [pool[i], pool[j]] = [pool[j], pool[i]];
-        }
-        return pool;
+        return result;
     }
 
-    // Для каждого кейса храним отдельный массив (но все они генерируются по одним шансам)
-    let case3Pool = [];
-    let case5Pool = [];
-    let case10Pool = [];
+    // Текущий массив для отображения (для каждого кейса он свой, но можно общий)
+    let currentDisplayArray = [];
 
-    function refreshPools() {
-        case3Pool = buildWeightedList();
-        case5Pool = buildWeightedList();
-        case10Pool = buildWeightedList();
-    }
-
-    // Текущий активный кейс
-    let selectedReq = 3; // 3,5,10
-    let currentPool = [];
-
-    // Статистика открытий (для обычных игроков)
+    // ========== СОСТОЯНИЕ КЕЙСОВ ==========
+    let selectedReq = 3;          // 3,5,10
     let userReferrals = 0;
     let openedCase3 = 0, openedCase5 = 0, openedCase10 = 0;
 
-    // Элементы DOM
+    // DOM элементы
     const trackEl = document.getElementById('slotTrack');
     const wrapper = document.getElementById('trackWrapper');
 
-    // Рендер трека на основе текущего пула (8 повторений для бесконечной прокрутки)
+    // Рендер трека на основе currentDisplayArray
     function renderSlot() {
-        if (!currentPool.length) refreshPools();
-        const pool = currentPool;
-        // делаем 6 копий подряд для иллюзии бесконечности
-        let repeated = [];
-        for (let i = 0; i < 6; i++) {
-            repeated.push(...pool);
+        if (!currentDisplayArray.length) {
+            currentDisplayArray = buildDisplayArray(90);
         }
         trackEl.innerHTML = '';
-        repeated.forEach(skin => {
+        currentDisplayArray.forEach(skin => {
             const card = document.createElement('div');
             card.className = `slot-card ${skin.rarity}`;
             card.innerHTML = `
@@ -403,13 +397,13 @@
             `;
             trackEl.appendChild(card);
         });
-        // Центрируем прокрутку, чтобы стрелка была над каким-то элементом
+        // Центрируем прокрутку
         setTimeout(() => {
             wrapper.scrollLeft = (wrapper.scrollWidth - wrapper.clientWidth) / 2;
         }, 10);
     }
 
-    // Получить элемент, находящийся точно под стрелкой (по центру вьюпорта)
+    // Получить карточку под стрелкой (центр видимой области)
     function getCenterCard() {
         const containerRect = wrapper.getBoundingClientRect();
         const centerX = containerRect.left + containerRect.width / 2;
@@ -428,39 +422,41 @@
         return closestCard;
     }
 
-    // Получить объект скина по карточке (по содержимому)
+    // Получить скин по карточке
     function getSkinFromCard(card) {
         if (!card) return null;
         const nameDiv = card.querySelector('.skin-name');
         if (!nameDiv) return null;
         const skinName = nameDiv.innerText;
-        // ищем в текущем пуле (оригинальный объект)
-        return currentPool.find(s => s.name === skinName) || null;
+        return currentDisplayArray.find(s => s.name === skinName) || null;
     }
 
-    // Анимация прокрутки с инерцией (реальное физическое движение)
+    // ========== ПРОКРУТКА С ФИЗИКОЙ ==========
     let isSpinning = false;
     let animFrame = null;
-    function startSpinWithPhysics() {
+
+    function startSpin() {
         if (isSpinning) return;
         isSpinning = true;
-        let velocity = 45 + Math.random() * 35; // начальная скорость в px за кадр
-        const friction = 0.985;
+        // Начальная скорость (пикселей за кадр) – делаем быстрее, но торможение резкое
+        let velocity = 55 + Math.random() * 40;
+        const friction = 0.96;      // быстрое замедление
         let scrollPos = wrapper.scrollLeft;
         const maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
-        
+
         function step() {
             if (!isSpinning) return;
             velocity *= friction;
             scrollPos += velocity;
+            // Бесконечная прокрутка: если вылезаем за пределы, перескакиваем
             if (scrollPos >= maxScroll) {
                 scrollPos = scrollPos - maxScroll;
-                // небольшая корректировка для зацикливания
             }
             if (scrollPos < 0) scrollPos = 0;
             wrapper.scrollLeft = scrollPos;
+
             if (Math.abs(velocity) < 0.8) {
-                // остановка: определяем выпавший скин и показываем
+                // Остановка – определяем, что под стрелкой, и применяем "байт"
                 finishAndDrop();
                 return;
             }
@@ -471,57 +467,61 @@
         function finishAndDrop() {
             if (animFrame) cancelAnimationFrame(animFrame);
             isSpinning = false;
-            // получаем карточку под стрелкой
+
+            // Определяем скин под стрелкой
             const centerCard = getCenterCard();
+            let droppedSkin = null;
+            let isBait = false;
+
             if (centerCard) {
-                const droppedSkin = getSkinFromCard(centerCard);
-                if (droppedSkin) {
-                    showResultModal(droppedSkin);
-                    // Если не владелец, списываем попытку
-                    if (!isOwner) {
-                        if (selectedReq === 3) openedCase3++;
-                        else if (selectedReq === 5) openedCase5++;
-                        else openedCase10++;
-                    } else {
-                        if (tg) tg.showAlert("👑 Бесплатное открытие (владелец)");
-                    }
-                    refreshUI();
-                    // ОБНОВЛЯЕМ ПУЛ (после открытия кейса желательно перемешать заново для честности)
-                    refreshPoolsForCase();
-                    renderSlot();
+                const skinUnderArrow = getSkinFromCard(centerCard);
+                if (skinUnderArrow && skinUnderArrow.rarity === 'mythic') {
+                    // БАЙТ: жёлтый не выпадает, выбираем случайный non-mythic
+                    droppedSkin = getRandomNonMythic();
+                    isBait = true;
+                    if (tg) tg.HapticFeedback?.notificationOccurred('warning');
+                } else if (skinUnderArrow) {
+                    // Обычный или редкий – выпадает он
+                    droppedSkin = skinUnderArrow;
                 } else {
-                    console.warn("Скин не найден");
-                    refreshUI();
+                    // fallback
+                    droppedSkin = getRandomNonMythic();
                 }
             } else {
-                refreshUI();
+                droppedSkin = getRandomNonMythic();
             }
+
+            // Показываем результат
+            showResultModal(droppedSkin, isBait);
+
+            // Списываем попытку, если не владелец
+            if (!isOwner) {
+                if (selectedReq === 3) openedCase3++;
+                else if (selectedReq === 5) openedCase5++;
+                else if (selectedReq === 10) openedCase10++;
+            } else {
+                if (tg) tg.showAlert("👑 Бесплатное открытие (владелец)");
+            }
+            refreshUI();
+
+            // Обновляем массив отображения (чтобы порядок скинов менялся)
+            currentDisplayArray = buildDisplayArray(90);
+            renderSlot();
         }
     }
 
-    // Обновить пулы скинов для текущего кейса и пересобрать
-    function refreshPoolsForCase() {
-        if (selectedReq === 3) currentPool = case3Pool;
-        else if (selectedReq === 5) currentPool = case5Pool;
-        else currentPool = case10Pool;
-        if (currentPool.length === 0) {
-            refreshPools();
-            if (selectedReq === 3) currentPool = case3Pool;
-            else if (selectedReq === 5) currentPool = case5Pool;
-            else currentPool = case10Pool;
-        }
-    }
-
-    // Показать результат
-    function showResultModal(skin) {
+    function showResultModal(skin, isBait) {
         const modal = document.getElementById('resultModal');
-        document.getElementById('modalImg').src = skin.image;
-        document.getElementById('modalSkinText').innerText = skin.name;
+        const img = document.getElementById('modalImg');
+        const text = document.getElementById('modalSkinText');
+        img.src = skin.image;
+        text.innerText = skin.name;
         modal.classList.add('active');
         if (tg) tg.HapticFeedback?.notificationOccurred('success');
+        // Если это был байт, можно добавить сообщение, но не обязательно
     }
 
-    // Проверка доступности открытия (для обычных)
+    // ========== ПРОВЕРКА ДОСТУПНОСТИ ==========
     function canOpenCase() {
         if (isOwner) return true;
         let available = 0;
@@ -531,7 +531,6 @@
         return available > 0;
     }
 
-    // Обновить все UI: рефералы, оставшиеся кейсы, активность кнопок
     function refreshUI() {
         document.getElementById('referralCount').innerText = userReferrals;
         let totalLeft = 0;
@@ -543,7 +542,7 @@
             totalLeft = 999;
         }
         document.getElementById('casesLeft').innerText = isOwner ? "∞" : totalLeft;
-        
+
         const btn3 = document.querySelector('[data-req="3"]');
         const btn5 = document.querySelector('[data-req="5"]');
         const btn10 = document.querySelector('[data-req="10"]');
@@ -553,15 +552,13 @@
         btn3.classList.toggle('disabled', !avail3);
         btn5.classList.toggle('disabled', !avail5);
         btn10.classList.toggle('disabled', !avail10);
-        
-        // подсветка активного
+
         document.querySelectorAll('.case-btn').forEach(btn => btn.classList.remove('active'));
         if (selectedReq === 3) btn3.classList.add('active');
         if (selectedReq === 5) btn5.classList.add('active');
         if (selectedReq === 10) btn10.classList.add('active');
     }
 
-    // Сменить кейс
     function setCase(req) {
         if (!isOwner) {
             let avail = false;
@@ -569,36 +566,32 @@
             else if (req === 5) avail = (Math.floor(userReferrals / 5) - openedCase5 > 0);
             else avail = (Math.floor(userReferrals / 10) - openedCase10 > 0);
             if (!avail && userReferrals < req) {
-                if (tg) tg.showAlert(`❌ У вас нет доступных открытий для кейса ${req}`);
+                if (tg) tg.showAlert(`❌ Нет доступных открытий для кейса ${req}`);
                 return;
             }
         }
         selectedReq = req;
-        refreshPoolsForCase();
-        renderSlot();
         refreshUI();
+        // Не меняем массив отображения для разных кейсов (все скины одинаковы)
     }
 
-    // Открыть кейс (запуск прокрутки)
     function attemptOpen() {
         if (!canOpenCase()) {
-            if (tg) tg.showAlert(`❌ Недостаточно рефералов! Для кейса ${selectedReq} нужно ${selectedReq} приглашений.`);
+            if (tg) tg.showAlert(`❌ Не хватает рефералов! Нужно ${selectedReq} приглашений.`);
             else alert(`Нужно ${selectedReq} рефералов`);
             return;
         }
-        startSpinWithPhysics();
+        startSpin();
     }
 
-    // Инициализация рефералов (из start_param или тест)
+    // Инициализация рефералов
     function initReferrals() {
         if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
             let val = parseInt(tg.initDataUnsafe.start_param);
             userReferrals = isNaN(val) ? 0 : val;
         } else {
-            // Демо: если владелец — 20 рефералов, иначе 2
             userReferrals = isOwner ? 20 : 2;
         }
-        // для демонстрации обычным юзерам дадим 2 реферала
         if (!isOwner && userReferrals === 0) userReferrals = 2;
         refreshUI();
     }
@@ -621,7 +614,8 @@
     });
 
     // Старт
-    refreshPools();
+    currentDisplayArray = buildDisplayArray(90);
+    renderSlot();
     initReferrals();
     setCase(3);
 </script>
