@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Case Battle | Инвентарь и вывод</title>
+    <title>Case Battle | Надёжный вывод</title>
     <style>
         * {
             margin: 0;
@@ -244,17 +244,17 @@
             background: linear-gradient(115deg, #5f7ef0, #2b4cbe);
         }
 
-        .inventory-panel {
+        .inventory-panel, .settings-panel {
             margin-top: 20px;
             background: #02061780;
             border-radius: 32px;
             padding: 16px;
             display: none;
         }
-        .inventory-panel.show {
+        .inventory-panel.show, .settings-panel.show {
             display: block;
         }
-        .inventory-header {
+        .inventory-header, .settings-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -262,7 +262,7 @@
             flex-wrap: wrap;
             gap: 12px;
         }
-        .trade-link-input {
+        .trade-link-input, .token-input, .owner-id-input {
             background: #0f1422;
             border: 1px solid #4c6a9e;
             padding: 8px 12px;
@@ -271,7 +271,7 @@
             width: 200px;
             font-size: 12px;
         }
-        .save-trade-btn {
+        .save-trade-btn, .save-settings-btn {
             background: #2f4788;
             padding: 6px 16px;
             border-radius: 30px;
@@ -391,6 +391,7 @@
     <div class="tabs">
         <div class="tab-btn active" data-tab="cases">🎲 Кейсы</div>
         <div class="tab-btn" data-tab="inventory">📦 Инвентарь</div>
+        <div class="tab-btn" data-tab="settings">⚙️ Настройки</div>
     </div>
 
     <!-- Панель кейсов -->
@@ -423,6 +424,16 @@
         </div>
         <div class="inventory-list" id="inventoryList"></div>
     </div>
+
+    <!-- Панель настроек (токен и ID владельцев) -->
+    <div id="settingsPanel" class="settings-panel">
+        <div class="settings-header">
+            <input type="text" id="botTokenInput" class="token-input" placeholder="Bot Token (например, 123456:ABC-DEF)">
+            <input type="text" id="ownerIdsInput" class="owner-id-input" placeholder="ID владельцев (через запятую)">
+            <div class="save-settings-btn" id="saveSettingsBtn">💾 Сохранить</div>
+        </div>
+        <div style="font-size:12px; color:#aaa;">Внимание: токен хранится только на вашем устройстве. Для продакшена используйте серверную часть.</div>
+    </div>
 </div>
 
 <div id="resultModal" class="modal">
@@ -445,20 +456,54 @@
         tg.MainButton.hide();
     }
 
-    // Владельцы (сюда же будет отправляться заявка)
-    const OWNER_IDS = [1225488154, 912778066];
+    // Получаем данные пользователя
     let currentUserId = null;
     let currentUsername = "unknown";
     if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         currentUserId = tg.initDataUnsafe.user.id;
         currentUsername = tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name || "user";
     } else {
-        currentUserId = 1225488154;
+        currentUserId = 1225488154; // демо
         currentUsername = "test_user";
     }
-    const isOwner = OWNER_IDS.includes(currentUserId);
-    if (isOwner) {
-        document.getElementById('ownerBadge').style.display = 'inline-block';
+
+    // Владельцы (загружаются из настроек)
+    let ownerIds = [1225488154, 912778066]; // дефолтные
+    let botToken = "";
+
+    // Загружаем настройки
+    function loadSettings() {
+        const storedToken = localStorage.getItem(`botToken_${currentUserId}`);
+        if (storedToken) botToken = storedToken;
+        document.getElementById('botTokenInput').value = botToken;
+        const storedOwners = localStorage.getItem(`ownerIds_${currentUserId}`);
+        if (storedOwners) {
+            try {
+                ownerIds = JSON.parse(storedOwners);
+                document.getElementById('ownerIdsInput').value = ownerIds.join(',');
+            } catch(e) {}
+        }
+    }
+    function saveSettings() {
+        const token = document.getElementById('botTokenInput').value.trim();
+        const ownersStr = document.getElementById('ownerIdsInput').value.trim();
+        botToken = token;
+        localStorage.setItem(`botToken_${currentUserId}`, token);
+        if (ownersStr) {
+            const ids = ownersStr.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+            if (ids.length) {
+                ownerIds = ids;
+                localStorage.setItem(`ownerIds_${currentUserId}`, JSON.stringify(ownerIds));
+            }
+        }
+        showToast("Настройки сохранены");
+    }
+
+    // Проверка, является ли текущий пользователь владельцем
+    const isOwner = () => ownerIds.includes(currentUserId);
+    function updateOwnerBadge() {
+        if (isOwner()) document.getElementById('ownerBadge').style.display = 'inline-block';
+        else document.getElementById('ownerBadge').style.display = 'none';
     }
 
     // ======================== БАЗА СКИНОВ ========================
@@ -474,7 +519,7 @@
         { name: "Glock-18 | Moonrise (Field-Tested)", image: "https://cdn2.csgo.com/item/image/width=916/Glock-18%20%7C%20Moonrise%20(Field-Tested).webp", rarity: "mythic" }
     ];
 
-    // Получить случайный не-мифический скин
+    // Функция получения случайного НЕ mythic с шансами 70% common, 30% rare
     function getRandomNonMythic() {
         const nonMythic = skinLibrary.filter(s => s.rarity !== 'mythic');
         let totalWeight = 0;
@@ -492,7 +537,7 @@
         return nonMythic[0];
     }
 
-    // Генерация ленты: чередуем, но мифики будут только в чётных позициях (гарантируем, что центральный никогда не мифик)
+    // Генерация ленты с мификами (для красоты), но они не выпадают
     function buildDisplayArray(length = 60) {
         const result = [];
         const mythic = skinLibrary.find(s => s.rarity === 'mythic');
@@ -503,8 +548,12 @@
                 result.push({ ...mythic });
             }
         }
-        // небольшое перемешивание, но не перемещаем мифики в позиции, которые могут стать центральными
-        // Для надёжности после сборки дополнительно проверим центральную область в текущем рендере
+        // Небольшое перемешивание
+        for (let i = 0; i < result.length; i++) {
+            if (Math.random() < 0.15 && i+1 < result.length) {
+                [result[i], result[i+1]] = [result[i+1], result[i]];
+            }
+        }
         return result;
     }
 
@@ -515,8 +564,8 @@
     let userReferrals = 0;
     let openedCase3 = 0, openedCase5 = 0, openedCase10 = 0;
 
-    // Инвентарь: каждый скин имеет уникальный id и статус
-    let inventory = []; // { id, name, image, rarity, status: 'available' | 'pending' }
+    // Инвентарь
+    let inventory = []; // { id, name, image, rarity, status }
 
     // Trade link
     let tradeLink = "";
@@ -525,32 +574,23 @@
     const trackEl = document.getElementById('slotTrack');
     const wrapper = document.getElementById('trackWrapper');
 
-    // Генерация уникального ID
     function generateId() {
         return Date.now() + '-' + Math.random().toString(36).substr(2, 6);
     }
 
-    // Загрузка данных
     function loadUserData() {
         const storedInv = localStorage.getItem(`inv_${currentUserId}`);
-        if (storedInv) {
-            inventory = JSON.parse(storedInv);
-        } else {
-            inventory = [];
-        }
+        inventory = storedInv ? JSON.parse(storedInv) : [];
         const storedTrade = localStorage.getItem(`trade_${currentUserId}`);
-        if (storedTrade) tradeLink = storedTrade;
-        const tradeInput = document.getElementById('tradeLinkInput');
-        if (tradeInput) tradeInput.value = tradeLink;
+        tradeLink = storedTrade || "";
+        document.getElementById('tradeLinkInput').value = tradeLink;
         renderInventory();
     }
-
-    function saveInventory() {
-        localStorage.setItem(`inv_${currentUserId}`, JSON.stringify(inventory));
-    }
-
+    function saveInventory() { localStorage.setItem(`inv_${currentUserId}`, JSON.stringify(inventory)); }
     function saveTradeLink() {
+        tradeLink = document.getElementById('tradeLinkInput').value.trim();
         localStorage.setItem(`trade_${currentUserId}`, tradeLink);
+        showToast("Trade Link сохранён");
     }
 
     function addToInventory(skin) {
@@ -561,51 +601,54 @@
         showToast(`🎁 ${skin.name} добавлен в инвентарь!`);
     }
 
-    // Отправка заявки владельцам (через бэкенд)
+    // Отправка заявки владельцам через Telegram Bot API
     async function sendWithdrawRequestToOwners(skinId, skinName) {
-        // Здесь вы должны отправить POST на ваш сервер, который через бота отправит сообщение владельцам
-        // Например:
-        try {
-            const response = await fetch('https://your-backend.com/api/withdraw-request', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: currentUserId,
-                    username: currentUsername,
-                    skinId: skinId,
-                    skinName: skinName,
-                    tradeLink: tradeLink
-                })
-            });
-            if (response.ok) {
-                showToast("Заявка отправлена владельцам");
-            } else {
-                showToast("Ошибка отправки, попробуйте позже");
-            }
-        } catch (e) {
-            console.error(e);
-            showToast("Не удалось отправить заявку (проверьте соединение)");
+        if (!botToken) {
+            showToast("❌ Не указан Bot Token в настройках!");
+            return false;
         }
-        // Для демонстрации показываем в консоли, что нужно отправить
-        console.log(`[ЗАЯВКА] Пользователь ${currentUserId} (${currentUsername}) хочет вывести ${skinName}. Trade link: ${tradeLink}`);
-        console.log(`[ДЕЙСТВИЕ ВЛАДЕЛЬЦА] Чтобы подтвердить вывод, выполните: confirmWithdraw("${skinId}")`);
+        if (ownerIds.length === 0) {
+            showToast("❌ Не указаны ID владельцев в настройках!");
+            return false;
+        }
+        const message = `🔔 НОВАЯ ЗАЯВКА НА ВЫВОД\n\n👤 ID: ${currentUserId}\n👤 Ник: ${currentUsername}\n🔗 Trade Link: ${tradeLink}\n🎁 Скин: ${skinName}\n🆔 ID скина: ${skinId}`;
+        let success = false;
+        for (let ownerId of ownerIds) {
+            try {
+                const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: ownerId, text: message, parse_mode: 'HTML' })
+                });
+                const data = await response.json();
+                if (data.ok) success = true;
+                else console.error(`Ошибка отправки владельцу ${ownerId}:`, data);
+            } catch(e) { console.error(e); }
+        }
+        if (success) {
+            showToast("✅ Заявка отправлена владельцам");
+            return true;
+        } else {
+            showToast("❌ Не удалось отправить заявку. Проверьте токен и ID.");
+            return false;
+        }
     }
 
-    // Функция для подтверждения вывода (вызывается владельцем через бота или вручную)
+    // Функция для подтверждения вывода (вызывается извне или по кнопке от владельца)
     window.confirmWithdraw = function(skinId) {
         const index = inventory.findIndex(item => item.id === skinId);
         if (index !== -1 && inventory[index].status === 'pending') {
             inventory.splice(index, 1);
             saveInventory();
             renderInventory();
-            showToast("Скин удалён из инвентаря (вывод подтверждён)");
-            if (tg) tg.showAlert("Вывод подтверждён, скин удалён");
+            showToast("✅ Вывод подтверждён, скин удалён из инвентаря");
+            if (tg) tg.showAlert("Скин успешно выведен!");
         } else {
             showToast("Скин не найден или уже обработан");
         }
     };
 
-    // Отрисовка инвентаря
     function renderInventory() {
         const container = document.getElementById('inventoryList');
         if (!container) return;
@@ -627,9 +670,7 @@
             `;
             container.appendChild(div);
         });
-        // Навесить обработчики
-        document.querySelectorAll('.withdraw-btn').forEach(btn => {
-            if (btn.disabled) return;
+        document.querySelectorAll('.withdraw-btn:not([disabled])').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const skinId = btn.getAttribute('data-id');
                 const skinItem = inventory.find(i => i.id === skinId);
@@ -639,16 +680,21 @@
                     return;
                 }
                 if (!tradeLink || tradeLink.trim() === '') {
-                    showToast("❌ Сначала сохраните Trade Link!");
+                    showToast("❌ Сначала сохраните Trade Link в инвентаре!");
                     return;
                 }
                 // Меняем статус
                 skinItem.status = 'pending';
                 saveInventory();
                 renderInventory();
-                // Отправляем заявку владельцам
-                await sendWithdrawRequestToOwners(skinId, skinItem.name);
-                showToast("Заявка отправлена. Ожидайте подтверждения от владельца.");
+                // Отправляем заявку
+                const sent = await sendWithdrawRequestToOwners(skinId, skinItem.name);
+                if (!sent) {
+                    // Возвращаем статус обратно
+                    skinItem.status = 'available';
+                    saveInventory();
+                    renderInventory();
+                }
             });
         });
     }
@@ -657,65 +703,22 @@
         const toast = document.getElementById('toastMsg');
         toast.innerText = msg;
         toast.style.display = 'block';
-        setTimeout(() => {
-            toast.style.display = 'none';
-        }, 3000);
+        setTimeout(() => { toast.style.display = 'none'; }, 3000);
     }
 
-    // Механика прокрутки: принудительно убираем жёлтый из центра после остановки
-    function ensureCenterIsNotMythic() {
-        let centerCard = getCenterCard();
-        let centerSkin = centerCard ? getSkinFromCard(centerCard) : null;
-        if (centerSkin && centerSkin.rarity === 'mythic') {
-            const cards = Array.from(document.querySelectorAll('.slot-card'));
-            const centerIndex = cards.indexOf(centerCard);
-            let targetIndex = -1;
-            // ищем ближайший non-mythic
-            for (let offset = 1; offset < cards.length; offset++) {
-                const leftIdx = centerIndex - offset;
-                const rightIdx = centerIndex + offset;
-                if (leftIdx >= 0) {
-                    const leftSkin = getSkinFromCard(cards[leftIdx]);
-                    if (leftSkin && leftSkin.rarity !== 'mythic') {
-                        targetIndex = leftIdx;
-                        break;
-                    }
-                }
-                if (rightIdx < cards.length) {
-                    const rightSkin = getSkinFromCard(cards[rightIdx]);
-                    if (rightSkin && rightSkin.rarity !== 'mythic') {
-                        targetIndex = rightIdx;
-                        break;
-                    }
-                }
-            }
-            if (targetIndex !== -1) {
-                cards[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-                // Небольшая задержка, чтобы скролл успел отработать
-                return new Promise(resolve => setTimeout(resolve, 200));
-            }
-        }
-        return Promise.resolve();
-    }
-
+    // ========== МЕХАНИКА ПРОКРУТКИ (ГАРАНТИРУЕМ ОТСУТСТВИЕ МИФИКА) ==========
     function getCenterCard() {
         const containerRect = wrapper.getBoundingClientRect();
         const centerX = containerRect.left + containerRect.width / 2;
-        let closestCard = null;
-        let minDist = Infinity;
-        const cards = document.querySelectorAll('.slot-card');
-        for (let card of cards) {
+        let closestCard = null, minDist = Infinity;
+        document.querySelectorAll('.slot-card').forEach(card => {
             const rect = card.getBoundingClientRect();
             const cardCenter = rect.left + rect.width / 2;
             const dist = Math.abs(centerX - cardCenter);
-            if (dist < minDist) {
-                minDist = dist;
-                closestCard = card;
-            }
-        }
+            if (dist < minDist) { minDist = dist; closestCard = card; }
+        });
         return closestCard;
     }
-
     function getSkinFromCard(card) {
         if (!card) return null;
         const nameDiv = card.querySelector('.skin-name');
@@ -723,29 +726,45 @@
         const skinName = nameDiv.innerText;
         return currentDisplayArray.find(s => s.name === skinName) || null;
     }
+    function ensureNoMythicUnderArrow() {
+        let centerCard = getCenterCard();
+        let centerSkin = centerCard ? getSkinFromCard(centerCard) : null;
+        if (centerSkin && centerSkin.rarity === 'mythic') {
+            // Сдвигаем на соседний non-mythic
+            const cards = Array.from(document.querySelectorAll('.slot-card'));
+            const idx = cards.indexOf(centerCard);
+            let targetIdx = -1;
+            for (let offset = 1; offset < cards.length; offset++) {
+                if (idx - offset >= 0) {
+                    const leftSkin = getSkinFromCard(cards[idx - offset]);
+                    if (leftSkin && leftSkin.rarity !== 'mythic') { targetIdx = idx - offset; break; }
+                }
+                if (idx + offset < cards.length) {
+                    const rightSkin = getSkinFromCard(cards[idx + offset]);
+                    if (rightSkin && rightSkin.rarity !== 'mythic') { targetIdx = idx + offset; break; }
+                }
+            }
+            if (targetIdx !== -1) {
+                cards[targetIdx].scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                return new Promise(resolve => setTimeout(resolve, 200));
+            }
+        }
+        return Promise.resolve();
+    }
 
     function renderSlot() {
-        if (!currentDisplayArray.length) {
-            currentDisplayArray = buildDisplayArray(60);
-        }
+        if (!currentDisplayArray.length) currentDisplayArray = buildDisplayArray(60);
         trackEl.innerHTML = '';
         currentDisplayArray.forEach(skin => {
             const card = document.createElement('div');
             card.className = `slot-card ${skin.rarity}`;
-            card.innerHTML = `
-                <img src="${skin.image}" onerror="this.src='https://placehold.co/120x120?text=Error'">
-                <div class="skin-name">${skin.name}</div>
-            `;
+            card.innerHTML = `<img src="${skin.image}" onerror="this.src='https://placehold.co/120x120'"><div class="skin-name">${skin.name}</div>`;
             trackEl.appendChild(card);
         });
-        setTimeout(() => {
-            wrapper.scrollLeft = (wrapper.scrollWidth - wrapper.clientWidth) / 2;
-        }, 10);
+        setTimeout(() => { wrapper.scrollLeft = (wrapper.scrollWidth - wrapper.clientWidth) / 2; }, 10);
     }
 
-    let isSpinning = false;
-    let animFrame = null;
-
+    let isSpinning = false, animFrame = null;
     function startSpinWithDuration(durationMs) {
         if (isSpinning) return;
         isSpinning = true;
@@ -754,42 +773,31 @@
         const totalWidth = wrapper.scrollWidth - wrapper.clientWidth;
         const fullLoops = 2 + Math.random() * 2;
         const delta = totalWidth * fullLoops + (Math.random() * totalWidth);
-        
-        function easeOutCubic(t) {
-            return 1 - Math.pow(1 - t, 3);
-        }
+        function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
         function step(now) {
             const elapsed = now - startTime;
             let t = Math.min(1, elapsed / durationMs);
             const ease = easeOutCubic(t);
-            const newPos = startPos + delta * ease;
+            let newPos = startPos + delta * ease;
             let limited = newPos % totalWidth;
             if (limited < 0) limited += totalWidth;
             wrapper.scrollLeft = limited;
-            if (t < 1) {
-                animFrame = requestAnimationFrame(step);
-            } else {
-                finishSpinAndDrop();
-            }
+            if (t < 1) animFrame = requestAnimationFrame(step);
+            else finish();
         }
         animFrame = requestAnimationFrame(step);
-
-        async function finishSpinAndDrop() {
+        async function finish() {
             if (animFrame) cancelAnimationFrame(animFrame);
-            // Принудительно убираем жёлтый из центра
-            await ensureCenterIsNotMythic();
-            const centerCard = getCenterCard();
-            let droppedSkin = null;
-            if (centerCard) {
-                droppedSkin = getSkinFromCard(centerCard);
-            }
+            await ensureNoMythicUnderArrow();
+            let centerCard = getCenterCard();
+            let droppedSkin = centerCard ? getSkinFromCard(centerCard) : null;
+            // Если всё же mythic (страховка) или null – берём случайный non-mythic
             if (!droppedSkin || droppedSkin.rarity === 'mythic') {
                 droppedSkin = getRandomNonMythic();
             }
             showResultModal(droppedSkin);
             addToInventory(droppedSkin);
-            
-            if (!isOwner) {
+            if (!isOwner()) {
                 if (selectedReq === 3) openedCase3++;
                 else if (selectedReq === 5) openedCase5++;
                 else openedCase10++;
@@ -805,134 +813,75 @@
 
     function showResultModal(skin) {
         const modal = document.getElementById('resultModal');
-        const img = document.getElementById('modalImg');
-        const text = document.getElementById('modalSkinText');
-        img.src = skin.image;
-        text.innerText = skin.name;
+        document.getElementById('modalImg').src = skin.image;
+        document.getElementById('modalSkinText').innerText = skin.name;
         modal.classList.add('active');
         if (tg) tg.HapticFeedback?.notificationOccurred('success');
     }
 
     function canOpenCase() {
-        if (isOwner) return true;
+        if (isOwner()) return true;
         let available = 0;
         if (selectedReq === 3) available = Math.floor(userReferrals / 3) - openedCase3;
         else if (selectedReq === 5) available = Math.floor(userReferrals / 5) - openedCase5;
         else available = Math.floor(userReferrals / 10) - openedCase10;
         return available > 0;
     }
-
     function refreshUI() {
         document.getElementById('referralCount').innerText = userReferrals;
-        let totalLeft = 0;
-        if (!isOwner) {
-            totalLeft += Math.floor(userReferrals / 3) - openedCase3;
-            totalLeft += Math.floor(userReferrals / 5) - openedCase5;
-            totalLeft += Math.floor(userReferrals / 10) - openedCase10;
-        } else {
-            totalLeft = 999;
-        }
-        document.getElementById('casesLeft').innerText = isOwner ? "∞" : totalLeft;
-
-        const btn3 = document.querySelector('[data-req="3"]');
-        const btn5 = document.querySelector('[data-req="5"]');
-        const btn10 = document.querySelector('[data-req="10"]');
-        let avail3 = isOwner ? true : (Math.floor(userReferrals / 3) - openedCase3 > 0);
-        let avail5 = isOwner ? true : (Math.floor(userReferrals / 5) - openedCase5 > 0);
-        let avail10 = isOwner ? true : (Math.floor(userReferrals / 10) - openedCase10 > 0);
-        btn3.classList.toggle('disabled', !avail3);
-        btn5.classList.toggle('disabled', !avail5);
-        btn10.classList.toggle('disabled', !avail10);
-
+        let totalLeft = isOwner() ? 999 : (Math.floor(userReferrals/3)-openedCase3 + Math.floor(userReferrals/5)-openedCase5 + Math.floor(userReferrals/10)-openedCase10);
+        document.getElementById('casesLeft').innerText = isOwner() ? "∞" : totalLeft;
+        const btns = [3,5,10].map(req => document.querySelector(`[data-req="${req}"]`));
+        btns.forEach((btn, i) => {
+            let req = [3,5,10][i];
+            let avail = isOwner() || (Math.floor(userReferrals / req) - (req===3?openedCase3:req===5?openedCase5:openedCase10) > 0);
+            btn.classList.toggle('disabled', !avail);
+        });
         document.querySelectorAll('.case-btn').forEach(btn => btn.classList.remove('active'));
-        if (selectedReq === 3) btn3.classList.add('active');
-        if (selectedReq === 5) btn5.classList.add('active');
-        if (selectedReq === 10) btn10.classList.add('active');
+        document.querySelector(`[data-req="${selectedReq}"]`).classList.add('active');
     }
-
     function setCase(req) {
-        if (!isOwner) {
-            let avail = false;
-            if (req === 3) avail = (Math.floor(userReferrals / 3) - openedCase3 > 0);
-            else if (req === 5) avail = (Math.floor(userReferrals / 5) - openedCase5 > 0);
-            else avail = (Math.floor(userReferrals / 10) - openedCase10 > 0);
-            if (!avail && userReferrals < req) {
-                if (tg) tg.showAlert(`❌ Нет доступных открытий для кейса ${req}`);
-                return;
-            }
+        if (!isOwner()) {
+            let avail = (Math.floor(userReferrals / req) - (req===3?openedCase3:req===5?openedCase5:openedCase10)) > 0;
+            if (!avail && userReferrals < req) { if(tg) tg.showAlert(`❌ Нет доступных открытий для кейса ${req}`); return; }
         }
         selectedReq = req;
         refreshUI();
     }
-
-    function attemptOpen(durationMs) {
-        if (!canOpenCase()) {
-            if (tg) tg.showAlert(`❌ Не хватает рефералов! Нужно ${selectedReq} приглашений.`);
-            else alert(`Нужно ${selectedReq} рефералов`);
-            return;
-        }
-        startSpinWithDuration(durationMs);
-    }
+    function attemptOpen(duration) { if(canOpenCase()) startSpinWithDuration(duration); else if(tg) tg.showAlert(`❌ Не хватает рефералов! Нужно ${selectedReq} приглашений.`); }
 
     function initReferrals() {
         if (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
             let val = parseInt(tg.initDataUnsafe.start_param);
             userReferrals = isNaN(val) ? 0 : val;
-        } else {
-            userReferrals = isOwner ? 20 : 2;
-        }
-        if (!isOwner && userReferrals === 0) userReferrals = 2;
+        } else userReferrals = isOwner() ? 20 : 2;
+        if (!isOwner() && userReferrals === 0) userReferrals = 2;
         refreshUI();
     }
 
-    // Переключение вкладок
     function switchTab(tab) {
-        const casesPanel = document.getElementById('casesPanel');
-        const invPanel = document.getElementById('inventoryPanel');
-        if (tab === 'cases') {
-            casesPanel.style.display = 'block';
-            invPanel.classList.remove('show');
-        } else {
-            casesPanel.style.display = 'none';
-            invPanel.classList.add('show');
-            renderInventory();
-        }
+        document.getElementById('casesPanel').style.display = tab === 'cases' ? 'block' : 'none';
+        document.getElementById('inventoryPanel').classList.toggle('show', tab === 'inventory');
+        document.getElementById('settingsPanel').classList.toggle('show', tab === 'settings');
+        if (tab === 'inventory') renderInventory();
     }
 
     // События
-    document.getElementById('slowOpenBtn').addEventListener('click', () => attemptOpen(5000));
-    document.getElementById('fastOpenBtn').addEventListener('click', () => attemptOpen(1200));
-    document.querySelectorAll('.case-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const req = parseInt(btn.getAttribute('data-req'));
-            if (!isNaN(req)) setCase(req);
-        });
-    });
-    document.getElementById('closeModalBtn').addEventListener('click', () => {
-        document.getElementById('resultModal').classList.remove('active');
-    });
-    document.getElementById('resultModal').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('resultModal')) {
-            document.getElementById('resultModal').classList.remove('active');
-        }
+    document.getElementById('slowOpenBtn').onclick = () => attemptOpen(5000);
+    document.getElementById('fastOpenBtn').onclick = () => attemptOpen(1200);
+    document.querySelectorAll('.case-btn').forEach(btn => btn.onclick = () => setCase(parseInt(btn.getAttribute('data-req'))));
+    document.getElementById('closeModalBtn').onclick = () => document.getElementById('resultModal').classList.remove('active');
+    document.getElementById('resultModal').onclick = (e) => { if(e.target === document.getElementById('resultModal')) document.getElementById('resultModal').classList.remove('active'); };
+    document.getElementById('saveTradeLinkBtn').onclick = saveTradeLink;
+    document.getElementById('saveSettingsBtn').onclick = () => { saveSettings(); updateOwnerBadge(); refreshUI(); };
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.onclick = () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        switchTab(btn.getAttribute('data-tab'));
     });
 
-    document.getElementById('saveTradeLinkBtn').addEventListener('click', () => {
-        const input = document.getElementById('tradeLinkInput');
-        tradeLink = input.value.trim();
-        saveTradeLink();
-        showToast("Trade Link сохранён!");
-    });
-
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            switchTab(btn.getAttribute('data-tab'));
-        });
-    });
-
-    // Загрузка
+    loadSettings();
+    updateOwnerBadge();
     loadUserData();
     currentDisplayArray = buildDisplayArray(60);
     renderSlot();
