@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Case Battle | Надёжный вывод</title>
+    <title>Case Battle | Надёжный вывод + Mythic шанс</title>
     <style>
         * {
             margin: 0;
@@ -537,7 +537,17 @@
         return nonMythic[0];
     }
 
-    // Генерация ленты с мификами (для красоты), но они не выпадают
+    // НОВАЯ ФУНКЦИЯ: mythic выпадает с шансом 0.00000001% (1e-8)
+    function getRandomSkinWithMythicChance() {
+        const MYTHIC_CHANCE = 1e-8; // 0.00000001% — меняйте здесь для тестов (например, 0.01 = 1%)
+        if (Math.random() < MYTHIC_CHANCE) {
+            const mythicSkin = skinLibrary.find(s => s.rarity === 'mythic');
+            if (mythicSkin) return { ...mythicSkin };
+        }
+        return getRandomNonMythic();
+    }
+
+    // Генерация ленты с мификами (для красоты), реальный дроп теперь может быть mythic
     function buildDisplayArray(length = 60) {
         const result = [];
         const mythic = skinLibrary.find(s => s.rarity === 'mythic');
@@ -706,7 +716,7 @@
         setTimeout(() => { toast.style.display = 'none'; }, 3000);
     }
 
-    // ========== МЕХАНИКА ПРОКРУТКИ (ГАРАНТИРУЕМ ОТСУТСТВИЕ МИФИКА) ==========
+    // ========== МЕХАНИКА ПРОКРУТКИ (Mythic может выпасть) ==========
     function getCenterCard() {
         const containerRect = wrapper.getBoundingClientRect();
         const centerX = containerRect.left + containerRect.width / 2;
@@ -725,31 +735,6 @@
         if (!nameDiv) return null;
         const skinName = nameDiv.innerText;
         return currentDisplayArray.find(s => s.name === skinName) || null;
-    }
-    function ensureNoMythicUnderArrow() {
-        let centerCard = getCenterCard();
-        let centerSkin = centerCard ? getSkinFromCard(centerCard) : null;
-        if (centerSkin && centerSkin.rarity === 'mythic') {
-            // Сдвигаем на соседний non-mythic
-            const cards = Array.from(document.querySelectorAll('.slot-card'));
-            const idx = cards.indexOf(centerCard);
-            let targetIdx = -1;
-            for (let offset = 1; offset < cards.length; offset++) {
-                if (idx - offset >= 0) {
-                    const leftSkin = getSkinFromCard(cards[idx - offset]);
-                    if (leftSkin && leftSkin.rarity !== 'mythic') { targetIdx = idx - offset; break; }
-                }
-                if (idx + offset < cards.length) {
-                    const rightSkin = getSkinFromCard(cards[idx + offset]);
-                    if (rightSkin && rightSkin.rarity !== 'mythic') { targetIdx = idx + offset; break; }
-                }
-            }
-            if (targetIdx !== -1) {
-                cards[targetIdx].scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-                return new Promise(resolve => setTimeout(resolve, 200));
-            }
-        }
-        return Promise.resolve();
     }
 
     function renderSlot() {
@@ -788,13 +773,27 @@
         animFrame = requestAnimationFrame(step);
         async function finish() {
             if (animFrame) cancelAnimationFrame(animFrame);
-            await ensureNoMythicUnderArrow();
+            // Убрана функция ensureNoMythicUnderArrow – теперь mythic может остаться под стрелкой
             let centerCard = getCenterCard();
             let droppedSkin = centerCard ? getSkinFromCard(centerCard) : null;
-            // Если всё же mythic (страховка) или null – берём случайный non-mythic
-            if (!droppedSkin || droppedSkin.rarity === 'mythic') {
-                droppedSkin = getRandomNonMythic();
+            // Если скин не определился – берём из новой функции с шансом на mythic
+            if (!droppedSkin) {
+                droppedSkin = getRandomSkinWithMythicChance();
+            } else {
+                // Если под стрелкой НЕ mythic – оставляем как есть (это обычный/редкий выпад)
+                // Если под стрелкой mythic – он и должен выпасть, это и есть тот самый сверхредкий шанс.
+                // Но для полной честности перепроверять не будем, доверяем ленте.
+                // Однако если разработчик хочет, чтобы mythic выпадал строго по шансу 1e-8, то нужно игнорировать ленту.
+                // Реализуем комбинированный вариант: если выпал mythic в ленте – он выпадает,
+                // но также мы дополнительно прогоняем через шанс, чтобы не было "накрутки" визуалом.
+                // Следующий код делает так: если в центре mythic, то с вероятностью (MYTHIC_CHANCE / частота mythic в ленте) оставляем,
+                // иначе заменяем на случайный non-mythic. Это сложно.
+                // Проще: вообще игнорируем ленту и всегда выбираем скин через getRandomSkinWithMythicChance().
+                // Так будет точно по заданной вероятности, а лента – просто анимация.
             }
+            // Для абсолютной честности используем только вероятностную функцию:
+            droppedSkin = getRandomSkinWithMythicChance();
+            
             showResultModal(droppedSkin);
             addToInventory(droppedSkin);
             if (!isOwner()) {
